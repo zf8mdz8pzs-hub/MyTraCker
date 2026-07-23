@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#131316">
+<title>Tracker</title>
+<style>html,body{background:#131316;}</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          graphite: '#131316',
+          panel: '#1B1B1F',
+          panelraised: '#242429',
+          signal: '#F0A431',
+          bone: '#EDEBE5',
+          steel: '#8C8C94',
+          steeldim: '#55555C',
+          danger: '#E2574C',
+        },
+        fontFamily: {
+          mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; box-sizing: border-box; }
+  html, body { height: 100%; overscroll-behavior-y: none; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; touch-action: manipulation; -webkit-font-smoothing: antialiased; }
+  input, textarea, select { font-size: 16px; }
+  ::-webkit-scrollbar { display: none; }
+  .tap-scale { transition: transform .12s ease; }
+  .tap-scale:active { transform: scale(.95); }
+  .safe-top { padding-top: max(20px, env(safe-area-inset-top)); }
+  .view { min-height: 100vh; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  #bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
+  .hidden-view { display: none; }
+  button, [role="button"] { -webkit-user-select: none; user-select: none; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid #F0A431; outline-offset: 2px;
+  }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .modal-sheet { transition: transform .28s cubic-bezier(.32,.72,0,1); }
+</style>
+</head>
+<body class="bg-graphite text-bone">
+
+<div id="app">
+
+  <!-- ============ DIETA ============ -->
+  <section id="view-dieta" class="view px-5 safe-top">
+    <header class="pb-5 flex items-start justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Plan de alimentación</p>
+        <h1 id="dieta-title" class="text-[26px] font-bold mt-1 leading-tight">Hoy</h1>
+      </div>
+      <button onclick="openShoppingModal()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px] mt-1">🛒</button>
+    </header>
+
+    <div id="dieta-day-chips" class="flex gap-2 overflow-x-auto pb-5 -mx-5 px-5"></div>
+
+    <div id="dieta-progress-wrap" class="bg-panel border border-white/[0.06] rounded-2xl p-4 mb-5">
+      <div class="flex items-center gap-4">
+        <svg viewBox="0 0 100 100" class="w-14 h-14 -rotate-90 shrink-0">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#242429" stroke-width="9"/>
+          <circle id="gauge-fill" cx="50" cy="50" r="42" fill="none" stroke="#F0A431" stroke-width="9"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
+            style="transition: stroke-dashoffset .4s ease;"/>
+        </svg>
+        <div>
+          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Progreso de hoy</p>
+          <p class="text-2xl font-bold font-mono mt-0.5"><span id="dieta-progress-frac">0/3</span></p>
+        </div>
+      </div>
+      <div id="dieta-macro-bars" class="mt-4 pt-4 border-t border-white/[0.06] space-y-2.5"></div>
+    </div>
+
+    <div id="dieta-meals" class="space-y-4"></div>
+  </section>
+
+  <!-- ============ ENTRENAMIENTO ============ -->
+  <section id="view-entreno" class="view hidden-view px-5 safe-top">
+    <header class="pb-5">
+      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Entrenamiento</p>
+      <h1 class="text-[26px] font-bold mt-1 leading-tight">Tu constancia</h1>
+    </header>
+
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-5 mb-6 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Racha actual</p>
+        <p class="mt-1 font-mono font-bold text-signal"><span id="streak-count" class="text-[34px] leading-none">0</span><span class="text-base text-steel ml-1">días</span></p>
+      </div>
+      <div id="streak-emoji" class="text-4xl transition-opacity">🔥</div>
+    </div>
+
+    <div class="flex items-center justify-between mb-4">
+      <button onclick="changeMonth(-1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">‹</button>
+      <span id="month-label" class="font-semibold text-[15px]"></span>
+      <button onclick="changeMonth(1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">›</button>
+    </div>
+
+    <div class="grid grid-cols-7 gap-1.5 mb-2">
+      <div class="text-center text-[10px] font-semibold text-steeldim">L</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">M</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">X</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">J</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">V</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">S</div>
+      <div class="text-center text-[10px] font-semibold text-steeldim">D</div>
+    </div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+
+    <div class="flex items-center gap-4 mt-4 text-[11px] text-steel">
+      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-signal inline-block"></span>Entrenado</span>
+      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm border-2 border-signal inline-block"></span>Descanso</span>
+    </div>
+
+    <p class="text-[12px] text-steel mt-3 leading-relaxed">Toca un día para marcarlo como entrenado. Vuelve a tocarlo para marcarlo como descanso — no rompe la racha, hasta 3 por semana. Un tercer toque lo deja vacío.</p>
+  </section>
+
+  <!-- ============ PESO ============ -->
+  <section id="view-peso" class="view hidden-view px-5 safe-top">
+    <header class="pb-5">
+      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Peso diario</p>
+      <h1 class="text-[26px] font-bold mt-1 leading-tight">Registra tu peso</h1>
+    </header>
+
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-5 mb-5">
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Peso de hoy</label>
+      <div class="flex items-end gap-2 mt-2">
+        <input id="weight-input" type="number" inputmode="decimal" step="0.1" placeholder="0.0"
+          class="flex-1 bg-transparent font-mono text-[52px] font-bold text-bone outline-none w-full leading-none">
+        <span class="text-xl text-steel font-semibold pb-2">kg</span>
+      </div>
+      <button onclick="saveWeight()" class="tap-scale w-full mt-5 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
+    </div>
+
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-4 mb-6">
+      <div id="chart-empty" class="hidden text-center py-12 text-steel text-sm px-4">Añade tu primer registro para ver tu progreso 📈</div>
+      <canvas id="weight-chart" height="170"></canvas>
+    </div>
+
+    <h3 class="font-semibold text-[15px] mb-3">Historial reciente</h3>
+    <div id="weight-history" class="space-y-2"></div>
+  </section>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-panel/85 backdrop-blur-xl border-t border-white/[0.07]">
+    <div class="flex items-stretch h-[64px] max-w-md mx-auto">
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="dieta" onclick="showTab('dieta')">
+        <span class="text-[20px]">🥩</span>
+        <span class="text-[10px] font-semibold tracking-wide">Dieta</span>
+      </button>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="entreno" onclick="showTab('entreno')">
+        <span class="text-[20px]">🏋️</span>
+        <span class="text-[10px] font-semibold tracking-wide">Entreno</span>
+      </button>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="peso" onclick="showTab('peso')">
+        <span class="text-[20px]">📉</span>
+        <span class="text-[10px] font-semibold tracking-wide">Peso</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============ EDIT MODAL ============ -->
+  <div id="edit-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeEditModal()"></div>
+    <div id="edit-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]" id="edit-modal-eyebrow">Comida 1</p>
+      <h3 class="font-bold text-lg mt-1 mb-4" id="edit-modal-title">Editar comida</h3>
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Ingredientes</label>
+      <textarea id="edit-ingredients" rows="6" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm leading-relaxed outline-none"></textarea>
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em] mt-4 block">Notas / método</label>
+      <textarea id="edit-notes" rows="3" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm leading-relaxed outline-none" placeholder="p. ej. tiempos de air fryer, sustituciones..."></textarea>
+
+      <div class="flex gap-3 mt-5">
+        <button onclick="closeEditModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
+        <button onclick="saveEdit()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SHOPPING LIST MODAL ============ -->
+  <div id="shopping-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeShoppingModal()"></div>
+    <div id="shopping-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <div class="flex justify-between items-start mb-1">
+        <div>
+          <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Esta semana</p>
+          <h3 class="font-bold text-lg mt-0.5">Lista de la compra</h3>
+        </div>
+        <button onclick="resetShoppingList()" class="tap-scale text-[12px] font-semibold text-steel mt-1.5">Reiniciar</button>
+      </div>
+      <p id="shopping-progress" class="text-[12px] font-mono text-steel mb-4"></p>
+      <div id="shopping-list-content" class="space-y-5"></div>
+      <p class="text-[12px] text-steel mt-5 pt-4 border-t border-white/[0.06] leading-relaxed">💰 Coste estimado: ~56-62€ — sigue dejándote margen de tu presupuesto semanal. No incluye la proteína en polvo (bote aparte, dura semanas).</p>
+      <button onclick="closeShoppingModal()" class="tap-scale w-full mt-4 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cerrar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   DATOS
+   ============================================================ */
+const dayNames      = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado']; // idx = getDay()
+const dayLabelsFull  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const dayLabelsShort = ['D','L','M','X','J','V','S'];
+const weekOrder = [1,2,3,4,5,6,0]; // orden de visualización L-D
+
+function getDefaultDietPlan(){
+  return {
+    lunes: {
+      comida1:{title:"Pollo con arroz y brócoli",
+        ingredients:["Pechuga de pollo: 280 g","Arroz blanco (en crudo): 160 g","Brócoli: 220 g","Aceite de oliva virgen extra: 2 cucharadas (25 ml)"],
+        method:"🔥 Pollo y brócoli al air fryer (180°C, ~16 min); arroz al fuego en paralelo.",
+        macros:"≈1.150 kcal · P 82g · C 140g · G 30g"},
+      comida2:{title:"Carne picada con boniato y brócoli",
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Boniato: 500 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        method:"🔥 Todo al air fryer, 20-22 min a 190°C (remueve a mitad).",
+        macros:"≈1.141 kcal · P 64g · C 114g · G 53g"}
+    },
+    martes: {
+      comida1:{title:"Huevos con patata y tomate",
+        ingredients:["Huevos enteros: 6 unidades","Claras de huevo: 2 unidades","Patata: 400 g","Tomate: 200 g","Aceite de oliva virgen extra: 1,5 cucharadas (20 ml)"],
+        method:"🔥 Patata en dados al air fryer (15 min); huevos revueltos en la sartén al fuego, en paralelo.",
+        macros:"≈964 kcal · P 53g · C 79g · G 51g"},
+      comida2:{title:"Salmón con boniato y brócoli",
+        ingredients:["Salmón congelado: 220 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        method:"🔥 Boniato al air fryer primero (18 min); añade el salmón los últimos 10-12 min.",
+        macros:"≈1.017 kcal · P 57g · C 104g · G 45g"}
+    },
+    miercoles: {
+      comida1:{title:"Bowl de atún cargado con maíz, pepinillos, aguacate y salsa de yogur",
+        ingredients:["Arroz blanco (en crudo): 160 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 100 g","Tomate: 150 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva virgen extra: 1 cucharada (15 ml)"],
+        method:"🔥 Arroz al fuego (o ya cocido de un lote). Salsa: mezcla el yogur con zumo de limón, sal y pimienta (opcional: un toque de mostaza o picante). El resto, en frío.",
+        macros:"≈1.266 kcal · P 77g · C 162g · G 38g"},
+      comida2:{title:"Pollo con arroz y tomate",
+        ingredients:["Muslos de pollo sin piel: 280 g","Arroz blanco (en crudo): 150 g","Tomate: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        method:"🔥 Pollo al air fryer (16 min); arroz al fuego en paralelo.",
+        macros:"≈1.091 kcal · P 68g · C 125g · G 35g"}
+    },
+    jueves: {
+      comida1:{title:"Hamburguesas de carne con patata y brócoli",
+        ingredients:["Carne picada (ternera/cerdo): 300 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        method:"🔥 Forma la carne en 4-5 hamburguesas y ponlo todo al air fryer, 18-20 min a 190°C.",
+        macros:"≈1.098 kcal · P 69g · C 91g · G 56g"},
+      comida2:{title:"Pollo con boniato y brócoli",
+        ingredients:["Pechuga de pollo: 280 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1,5 cucharadas (25 ml)"],
+        method:"🔥 Todo al air fryer, 20 min a 190°C.",
+        macros:"≈962 kcal · P 77g · C 104g · G 30g"}
+    },
+    viernes: {
+      comida1:{title:"Salmón con patata y brócoli",
+        ingredients:["Salmón congelado: 220 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        method:"🔥 Patata y brócoli al air fryer 15 min; añade el salmón los últimos 10-12 min.",
+        macros:"≈973 kcal · P 59g · C 91g · G 45g"},
+      comida2:{title:"Huevos con patata, pepino y tomate",
+        ingredients:["Huevos enteros: 6 unidades","Patata: 400 g","Pepino: 100 g","Tomate: 150 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        method:"🔥 Patata al air fryer (15 min) mientras haces los huevos en la sartén, en paralelo.",
+        macros:"≈971 kcal · P 53g · C 81g · G 51g"}
+    },
+    sabado: {
+      comida1:{title:"Bowl de atún cargado con maíz, pepinillos, aguacate y salsa de yogur",
+        ingredients:["Arroz blanco (en crudo): 150 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 150 g","Tomate: 100 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva virgen extra: 1 cucharada (15 ml)"],
+        method:"🔥 Igual que el de miércoles — arroz al fuego (o de un lote), salsa de yogur, y el resto en frío.",
+        macros:"≈1.230 kcal · P 76g · C 155g · G 38g"},
+      comida2:{title:"Carne picada con patata y brócoli",
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        method:"🔥 Todo al air fryer, 20 min a 190°C.",
+        macros:"≈1.058 kcal · P 65g · C 91g · G 53g"}
+    },
+    domingo: {
+      comida1:{title:"Pollo con boniato y brócoli",
+        ingredients:["Muslos de pollo sin piel: 280 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 2 cucharadas (25 ml)"],
+        method:"🔥 Cocina el doble hoy (2 tandas de air fryer) para adelantar proteína de la semana.",
+        macros:"≈1.027 kcal · P 69g · C 104g · G 40g"},
+      comida2:{title:"Carne picada con patata y tomate",
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 450 g","Tomate: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        method:"🔥 Todo al air fryer, 18-20 min a 190°C.",
+        macros:"≈1.026 kcal · P 61g · C 84g · G 53g"}
+    }
+  };
+}
+
+const shoppingListData = {
+  "Proteínas": ["Pechuga de pollo: 560 g","Muslos de pollo (sin piel): 560 g","Carne picada (ternera/cerdo): ~1,14 kg","Salmón congelado: 440 g","Atún en lata: 5 latas","Huevos: 18 unidades","Yogur griego natural: ~1,2 kg"],
+  "Verduras": ["Brócoli (fresco o congelado): 1,6 kg","Pepino: 350 g (2-3 unidades)","Tomate: 1 kg (6-7 unidades)","Maíz dulce enlatado: 1-2 latas pequeñas","Pepinillos: 1 bote pequeño","Plátano: 7 unidades (1 por día)"],
+  "Carbohidratos": ["Patata: 2,6 kg","Boniato: 1,85 kg","Arroz blanco: 620 g","Avena: 350 g"],
+  "Grasas": ["Aceite de oliva virgen extra: ~300 ml","Aguacate: 2 unidades","Frutos secos (almendras u otros): ~40 g"]
+};
+
+const DAILY_TARGETS = {kcal:2700, p:180, c:325, f:75};
+
+function getDefaultSnack(){
+  return {
+    title:"Batido de proteína completo",
+    ingredients:["Proteína en polvo: 1 cacito (~30 g)","Plátano: 1 unidad","Avena: 50 g","Yogur griego natural: 150 g","Agua al gusto"],
+    method:"🔥 Todo a la batidora, sin cocción. Tómalo cuando quieras dentro de tu ventana de alimentación.",
+    macros:"≈525 kcal · P 49g · C 69g · G 8g"
+  };
+}
+
+/* ============================================================
+   ESTADO Y PERSISTENCIA
+   ============================================================ */
+const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), selectedDietDayIdx: null };
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function toISODate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+function loadDietPlan(){ const s=localStorage.getItem('dietPlan'); return s?JSON.parse(s):getDefaultDietPlan(); }
+function saveDietPlan(p){ localStorage.setItem('dietPlan', JSON.stringify(p)); }
+function loadCompletions(){ return JSON.parse(localStorage.getItem('mealCompletions')||'{}'); }
+function saveCompletions(c){ localStorage.setItem('mealCompletions', JSON.stringify(c)); }
+function loadWorkoutDays(){ return JSON.parse(localStorage.getItem('workoutDays')||'{}'); }
+function saveWorkoutDays(w){ localStorage.setItem('workoutDays', JSON.stringify(w)); }
+function loadWeightEntries(){ return JSON.parse(localStorage.getItem('weightEntries')||'[]'); }
+function saveWeightEntries(e){ localStorage.setItem('weightEntries', JSON.stringify(e)); }
+function loadShoppingChecked(){ return JSON.parse(localStorage.getItem('shoppingChecked')||'{}'); }
+function saveShoppingChecked(c){ localStorage.setItem('shoppingChecked', JSON.stringify(c)); }
+function loadDailySnack(){ const s=localStorage.getItem('dailySnack'); return s?JSON.parse(s):getDefaultSnack(); }
+function saveDailySnack(s){ localStorage.setItem('dailySnack', JSON.stringify(s)); }
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+function showTab(tab){
+  state.activeTab = tab;
+  localStorage.setItem('activeTab', tab);
+  ['dieta','entreno','peso'].forEach(t=>{
+    document.getElementById('view-'+t).classList.toggle('hidden-view', t!==tab);
+  });
+  document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.classList.toggle('text-signal', btn.dataset.tab===tab);
+    btn.classList.toggle('text-steel', btn.dataset.tab!==tab);
+  });
+  if(tab==='dieta') renderDieta();
+  if(tab==='entreno') renderEntreno();
+  if(tab==='peso') renderPeso();
+}
+
+/* ============================================================
+   DIETA
+   ============================================================ */
+function parseMacros(macrosStr){
+  const kcalMatch = macrosStr.match(/≈([\d.]+)\s*kcal/);
+  const pMatch = macrosStr.match(/P\s*(\d+)\s*g/);
+  const cMatch = macrosStr.match(/C\s*(\d+)\s*g/);
+  const gMatch = macrosStr.match(/G\s*(\d+)\s*g/);
+  return {
+    kcal: kcalMatch ? parseFloat(kcalMatch[1].replace('.','')) : 0,
+    p: pMatch ? parseInt(pMatch[1]) : 0,
+    c: cMatch ? parseInt(cMatch[1]) : 0,
+    f: gMatch ? parseInt(gMatch[1]) : 0
+  };
+}
+function sumMacros(totals, m){ totals.kcal+=m.kcal; totals.p+=m.p; totals.c+=m.c; totals.f+=m.f; }
+
+function renderMacroBars(consumed){
+  const rows = [
+    {label:'Calorías', unit:'', c:consumed.kcal, t:DAILY_TARGETS.kcal, color:'#F0A431'},
+    {label:'Proteína', unit:'g', c:consumed.p, t:DAILY_TARGETS.p, color:'#E86A6A'},
+    {label:'Carbohidratos', unit:'g', c:consumed.c, t:DAILY_TARGETS.c, color:'#6BA8E8'},
+    {label:'Grasas', unit:'g', c:consumed.f, t:DAILY_TARGETS.f, color:'#B98AE8'},
+  ];
+  document.getElementById('dieta-macro-bars').innerHTML = rows.map(r=>{
+    const pct = Math.min(100, Math.round((r.c/r.t)*100));
+    return `<div>
+      <div class="flex justify-between items-baseline mb-1">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.1em]" style="color:${r.color}">${r.label}</span>
+        <span class="text-[11px] font-mono"><span class="text-bone font-bold">${r.c}</span><span class="text-steeldim">${r.unit} / ${r.t}${r.unit}</span></span>
+      </div>
+      <div class="h-1.5 bg-panelraised rounded-full overflow-hidden">
+        <div class="h-full rounded-full" style="width:${pct}%; background-color:${r.color}; transition: width .4s ease;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDieta(){
+  const todayIdx = new Date().getDay();
+  if(state.selectedDietDayIdx===null) state.selectedDietDayIdx = todayIdx;
+  const selectedIdx = state.selectedDietDayIdx;
+  const isToday = selectedIdx===todayIdx;
+  const dayName = dayNames[selectedIdx];
+  const plan = loadDietPlan();
+  const dayPlan = plan[dayName];
+  const completions = loadCompletions();
+  const todayISO = toISODate(new Date());
+  const snack = loadDailySnack();
+
+  document.getElementById('dieta-title').textContent = isToday ? 'Hoy · '+dayLabelsFull[selectedIdx] : dayLabelsFull[selectedIdx];
+
+  // chips
+  const chipsWrap = document.getElementById('dieta-day-chips');
+  chipsWrap.innerHTML = weekOrder.map(idx=>{
+    const active = idx===selectedIdx;
+    return `<button class="tap-scale shrink-0 w-10 h-10 rounded-full text-sm font-bold font-mono ${active?'bg-signal text-graphite':'bg-panel text-steel border border-white/[0.06]'}" onclick="selectDietDay(${idx})">${dayLabelsShort[idx]}</button>`;
+  }).join('');
+
+  // progreso + macros de hoy (solo relevante para hoy)
+  const gaugeWrap = document.getElementById('dieta-progress-wrap');
+  gaugeWrap.style.display = isToday ? 'block' : 'none';
+  let completedCount = 0;
+  ['comida1','comida2','snack'].forEach(k=>{ if(completions[todayISO+'_'+k]) completedCount++; });
+  const circumference = 263.9;
+  document.getElementById('gauge-fill').style.strokeDashoffset = circumference*(1-completedCount/3);
+  document.getElementById('dieta-progress-frac').textContent = completedCount+'/3';
+
+  if(isToday){
+    const todayPlan = plan[dayNames[todayIdx]];
+    const consumed = {kcal:0,p:0,c:0,f:0};
+    ['comida1','comida2'].forEach(k=>{
+      if(completions[todayISO+'_'+k]) sumMacros(consumed, parseMacros(todayPlan[k].macros));
+    });
+    if(completions[todayISO+'_snack']) sumMacros(consumed, parseMacros(snack.macros));
+    renderMacroBars(consumed);
+  }
+
+  // meal cards
+  const container = document.getElementById('dieta-meals');
+  container.innerHTML = '';
+  ['comida1','comida2'].forEach(mealKey=>{
+    const meal = dayPlan[mealKey];
+    const compKey = todayISO+'_'+mealKey;
+    const done = isToday && !!completions[compKey];
+    const card = document.createElement('div');
+    card.className = `bg-panel border rounded-2xl p-4 ${done?'border-signal/40':'border-white/[0.06]'}`;
+    card.innerHTML = `
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">${mealKey==='comida1'?'Comida 1':'Comida 2'}</span>
+        <button class="tap-scale text-steel text-[13px] font-semibold" onclick="openEditModal('${dayName}','${mealKey}')">Editar</button>
+      </div>
+      <h3 class="font-bold text-[16px] leading-snug ${done?'line-through text-steel':''}">${meal.title}</h3>
+      <ul class="mt-2.5 space-y-1">
+        ${meal.ingredients.map(i=>`<li class="text-[13.5px] text-steel flex gap-1.5"><span class="text-signal">·</span><span>${i}</span></li>`).join('')}
+      </ul>
+      ${meal.method?`<p class="mt-2.5 text-[12.5px] text-bone/80 bg-panelraised rounded-lg p-2.5 leading-relaxed">${meal.method}</p>`:''}
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/[0.06]">
+        <span class="text-[12px] font-mono text-steel">${meal.macros}</span>
+      </div>
+      ${isToday?`<button class="tap-scale w-full mt-3 py-2.5 rounded-xl font-bold text-[14px] ${done?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleMealComplete('${mealKey}')">${done?'✓ Completada':'Marcar como completada'}</button>`:''}
+    `;
+    container.appendChild(card);
+  });
+
+  // snack card (fijo, igual todos los días)
+  const snackDone = isToday && !!completions[todayISO+'_snack'];
+  const snackCard = document.createElement('div');
+  snackCard.className = `bg-panel border rounded-2xl p-4 ${snackDone?'border-signal/40':'border-white/[0.06]'}`;
+  snackCard.innerHTML = `
+    <div class="flex justify-between items-start mb-2">
+      <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">Extra diario</span>
+      <button class="tap-scale text-steel text-[13px] font-semibold" onclick="openSnackEditModal()">Editar</button>
+    </div>
+    <h3 class="font-bold text-[16px] leading-snug ${snackDone?'line-through text-steel':''}">${snack.title}</h3>
+    <ul class="mt-2.5 space-y-1">
+      ${snack.ingredients.map(i=>`<li class="text-[13.5px] text-steel flex gap-1.5"><span class="text-signal">·</span><span>${i}</span></li>`).join('')}
+    </ul>
+    ${snack.method?`<p class="mt-2.5 text-[12.5px] text-bone/80 bg-panelraised rounded-lg p-2.5 leading-relaxed">${snack.method}</p>`:''}
+    <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/[0.06]">
+      <span class="text-[12px] font-mono text-steel">${snack.macros}</span>
+    </div>
+    ${isToday?`<button class="tap-scale w-full mt-3 py-2.5 rounded-xl font-bold text-[14px] ${snackDone?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleSnackComplete()">${snackDone?'✓ Completado':'Marcar como completado'}</button>`:''}
+  `;
+  container.appendChild(snackCard);
+}
+
+function selectDietDay(idx){ state.selectedDietDayIdx = idx; renderDieta(); }
+
+function toggleMealComplete(mealKey){
+  const todayISO = toISODate(new Date());
+  const completions = loadCompletions();
+  const key = todayISO+'_'+mealKey;
+  completions[key] = !completions[key];
+  saveCompletions(completions);
+  renderDieta();
+}
+function toggleSnackComplete(){
+  const todayISO = toISODate(new Date());
+  const completions = loadCompletions();
+  const key = todayISO+'_snack';
+  completions[key] = !completions[key];
+  saveCompletions(completions);
+  renderDieta();
+}
+
+let editingContext = null;
+function openEditModal(dayName, mealKey){
+  editingContext = {type:'meal', dayName, mealKey};
+  const plan = loadDietPlan();
+  const meal = plan[dayName][mealKey];
+  document.getElementById('edit-modal-eyebrow').textContent = mealKey==='comida1'?'Comida 1':'Comida 2';
+  document.getElementById('edit-modal-title').textContent = meal.title;
+  document.getElementById('edit-ingredients').value = meal.ingredients.join('\n');
+  document.getElementById('edit-notes').value = meal.method || '';
+  openModalSheet();
+}
+function openSnackEditModal(){
+  editingContext = {type:'snack'};
+  const snack = loadDailySnack();
+  document.getElementById('edit-modal-eyebrow').textContent = 'Extra diario';
+  document.getElementById('edit-modal-title').textContent = snack.title;
+  document.getElementById('edit-ingredients').value = snack.ingredients.join('\n');
+  document.getElementById('edit-notes').value = snack.method || '';
+  openModalSheet();
+}
+function openModalSheet(){
+  const modal = document.getElementById('edit-modal');
+  const sheet = document.getElementById('edit-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeEditModal(){
+  const modal = document.getElementById('edit-modal');
+  const sheet = document.getElementById('edit-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+  editingContext = null;
+}
+function saveEdit(){
+  if(!editingContext) return;
+  const ingredients = document.getElementById('edit-ingredients').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const method = document.getElementById('edit-notes').value.trim();
+  if(editingContext.type==='snack'){
+    const snack = loadDailySnack();
+    snack.ingredients = ingredients;
+    snack.method = method;
+    saveDailySnack(snack);
+  } else {
+    const plan = loadDietPlan();
+    const {dayName, mealKey} = editingContext;
+    plan[dayName][mealKey].ingredients = ingredients;
+    plan[dayName][mealKey].method = method;
+    saveDietPlan(plan);
+  }
+  closeEditModal();
+  renderDieta();
+}
+
+function renderShoppingList(){
+  const checked = loadShoppingChecked();
+  let total = 0, done = 0;
+  let html = '';
+  Object.keys(shoppingListData).forEach(category=>{
+    html += `<div><p class="text-[11px] font-semibold text-steel uppercase tracking-[0.12em] mb-2">${category}</p><div class="space-y-1.5">`;
+    shoppingListData[category].forEach((item, idx)=>{
+      const key = category+'_'+idx;
+      const isChecked = !!checked[key];
+      total++; if(isChecked) done++;
+      html += `<button class="tap-scale w-full flex items-center gap-3 bg-panelraised rounded-xl px-3.5 py-3 text-left" onclick="toggleShoppingItem('${key}')">
+        <span class="w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center ${isChecked?'bg-signal border-signal':'border-steeldim'}">${isChecked?'<span class="text-graphite text-[12px] font-bold leading-none">✓</span>':''}</span>
+        <span class="text-[13.5px] ${isChecked?'text-steel line-through':'text-bone'}">${item}</span>
+      </button>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('shopping-list-content').innerHTML = html;
+  document.getElementById('shopping-progress').textContent = `${done}/${total} comprados`;
+}
+function toggleShoppingItem(key){
+  const checked = loadShoppingChecked();
+  checked[key] = !checked[key];
+  saveShoppingChecked(checked);
+  renderShoppingList();
+}
+function resetShoppingList(){
+  saveShoppingChecked({});
+  renderShoppingList();
+}
+function openShoppingModal(){
+  renderShoppingList();
+  const modal = document.getElementById('shopping-modal');
+  const sheet = document.getElementById('shopping-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeShoppingModal(){
+  const modal = document.getElementById('shopping-modal');
+  const sheet = document.getElementById('shopping-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+
+/* ============================================================
+   ENTRENAMIENTO
+   ============================================================ */
+function getStreakEmoji(streak){
+  if(streak>=60) return '👑';
+  if(streak>=30) return '🌟';
+  if(streak>=14) return '⚡';
+  if(streak>=7) return '💪';
+  return '🔥';
+}
+function getWeekBounds(dateObj){
+  const d = new Date(dateObj);
+  const day = d.getDay();
+  const diffToMonday = day===0 ? -6 : 1-day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate()+diffToMonday);
+  monday.setHours(0,0,0,0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate()+6);
+  return {monday, sunday};
+}
+function countRestDaysInWeek(dateObj, workoutDays){
+  const {monday, sunday} = getWeekBounds(dateObj);
+  let count = 0;
+  let cursor = new Date(monday);
+  while(cursor <= sunday){
+    if(workoutDays[toISODate(cursor)]==='rest') count++;
+    cursor.setDate(cursor.getDate()+1);
+  }
+  return count;
+}
+
+function renderEntreno(){
+  const workoutDays = loadWorkoutDays();
+
+  // racha: los días de descanso no la rompen, pero tampoco suman
+  let streak = 0;
+  let cursor = new Date();
+  const todayState = workoutDays[toISODate(cursor)];
+  if(todayState!=='trained' && todayState!=='rest') cursor.setDate(cursor.getDate()-1);
+  while(true){
+    const s = workoutDays[toISODate(cursor)];
+    if(s==='trained'){ streak++; cursor.setDate(cursor.getDate()-1); }
+    else if(s==='rest'){ cursor.setDate(cursor.getDate()-1); }
+    else break;
+  }
+  document.getElementById('streak-count').textContent = streak;
+  const emojiEl = document.getElementById('streak-emoji');
+  emojiEl.textContent = getStreakEmoji(streak);
+  emojiEl.style.opacity = streak===0 ? '0.35' : '1';
+
+  // calendario del mes
+  const year = state.calendarMonth.getFullYear();
+  const month = state.calendarMonth.getMonth();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('month-label').textContent = `${monthNames[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  let startOffset = firstDay.getDay()-1; if(startOffset<0) startOffset=6;
+
+  const grid = document.getElementById('calendar-grid');
+  let html = '';
+  for(let i=0;i<startOffset;i++) html += `<div></div>`;
+  const todayISO = toISODate(new Date());
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj = new Date(year, month, d);
+    const iso = toISODate(dateObj);
+    const dayState = workoutDays[iso];
+    const isToday = iso===todayISO;
+    const isFuture = dateObj > new Date(new Date().setHours(23,59,59,999));
+    let stateClasses;
+    if(dayState==='trained') stateClasses = 'bg-signal text-graphite';
+    else if(dayState==='rest') stateClasses = 'bg-panel text-signal border-2 border-signal';
+    else stateClasses = 'bg-panel text-steel border border-white/[0.06]';
+    html += `<button class="tap-scale aspect-square rounded-md flex items-center justify-center text-[13px] font-bold font-mono
+      ${stateClasses}
+      ${isToday && !dayState ? 'ring-1 ring-signal' : ''}
+      ${isFuture?'opacity-30 pointer-events-none':''}"
+      onclick="toggleWorkoutDay('${iso}')">${d}</button>`;
+  }
+  grid.innerHTML = html;
+}
+function toggleWorkoutDay(iso){
+  const w = loadWorkoutDays();
+  const current = w[iso];
+  const dateObj = new Date(iso+'T00:00:00');
+  if(!current){
+    w[iso] = 'trained';
+  } else if(current==='trained'){
+    if(countRestDaysInWeek(dateObj, w) < 3){ w[iso] = 'rest'; }
+    else { delete w[iso]; }
+  } else {
+    delete w[iso];
+  }
+  saveWorkoutDays(w);
+  renderEntreno();
+}
+function changeMonth(delta){
+  state.calendarMonth.setMonth(state.calendarMonth.getMonth()+delta);
+  renderEntreno();
+}
+
+/* ============================================================
+   PESO
+   ============================================================ */
+let weightChart = null;
+function renderPeso(){
+  const entries = loadWeightEntries().slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const chartEmpty = document.getElementById('chart-empty');
+  const canvas = document.getElementById('weight-chart');
+
+  if(entries.length===0){
+    chartEmpty.classList.remove('hidden');
+    canvas.classList.add('hidden');
+  } else {
+    chartEmpty.classList.add('hidden');
+    canvas.classList.remove('hidden');
+    const labels = entries.map(e=>{ const d=new Date(e.date+'T00:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
+    const data = entries.map(e=>e.weight);
+    if(weightChart) weightChart.destroy();
+    weightChart = new Chart(canvas.getContext('2d'), {
+      type:'line',
+      data:{ labels, datasets:[{ data, borderColor:'#F0A431', backgroundColor:'rgba(240,164,49,0.10)', fill:true, tension:.35, pointRadius:3, pointBackgroundColor:'#F0A431', pointBorderWidth:0, borderWidth:2.5 }]},
+      options:{ responsive:true, plugins:{legend:{display:false}},
+        scales:{
+          x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8C8C94', font:{size:10,family:'ui-monospace,monospace'}} },
+          y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8C8C94', font:{size:10,family:'ui-monospace,monospace'}} }
+        }
+      }
+    });
+  }
+
+  const historyEl = document.getElementById('weight-history');
+  const reversed = entries.slice().reverse();
+  if(reversed.length===0){
+    historyEl.innerHTML = `<p class="text-steel text-sm text-center py-6">Aún no hay registros</p>`;
+  } else {
+    historyEl.innerHTML = reversed.map(e=>{
+      const d = new Date(e.date+'T00:00:00');
+      const dateStr = d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+      return `<div class="relative overflow-hidden rounded-xl">
+        <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
+          <button class="text-white font-semibold text-sm" onclick="deleteWeightEntry('${e.date}')">Eliminar</button>
+        </div>
+        <div class="weight-row bg-panel border border-white/[0.06] flex justify-between items-center p-3.5 relative rounded-xl" style="transform:translateX(0);" data-date="${e.date}">
+          <span class="text-[13.5px] text-steel capitalize">${dateStr}</span>
+          <span class="font-mono font-bold text-[15px]">${e.weight} kg</span>
+        </div>
+      </div>`;
+    }).join('');
+    attachSwipeHandlers();
+  }
+
+  const todayISO = toISODate(new Date());
+  const todayEntry = entries.find(e=>e.date===todayISO);
+  document.getElementById('weight-input').value = todayEntry ? todayEntry.weight : '';
+}
+
+function saveWeight(){
+  const val = parseFloat(document.getElementById('weight-input').value);
+  if(isNaN(val) || val<=0) return;
+  const entries = loadWeightEntries();
+  const todayISO = toISODate(new Date());
+  const idx = entries.findIndex(e=>e.date===todayISO);
+  if(idx>=0) entries[idx].weight = val; else entries.push({date:todayISO, weight:val});
+  saveWeightEntries(entries);
+  renderPeso();
+}
+function deleteWeightEntry(date){
+  const entries = loadWeightEntries().filter(e=>e.date!==date);
+  saveWeightEntries(entries);
+  renderPeso();
+}
+function attachSwipeHandlers(){
+  document.querySelectorAll('.weight-row').forEach(row=>{
+    let startX=0, dx=0, dragging=false;
+    row.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; dragging=true; row.style.transition='none'; }, {passive:true});
+    row.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      dx = e.touches[0].clientX-startX;
+      if(dx>0) dx=0; if(dx<-84) dx=-84;
+      row.style.transform = `translateX(${dx}px)`;
+    }, {passive:true});
+    row.addEventListener('touchend', ()=>{
+      dragging=false;
+      row.style.transition='transform .2s ease';
+      row.style.transform = dx<-42 ? 'translateX(-84px)' : 'translateX(0)';
+    });
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+showTab(state.activeTab);
+</script>
+</body>
+</html>
