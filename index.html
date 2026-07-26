@@ -7,10 +7,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#131316">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Tracker</title>
 <style>html,body{background:#131316;}</style>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -138,7 +142,10 @@
     </header>
 
     <div class="bg-panel border border-white/[0.06] rounded-2xl p-5 mb-5">
-      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Peso de hoy</label>
+      <div class="flex justify-between items-center">
+        <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Peso</label>
+        <input id="weight-date-input" type="date" style="color-scheme: dark;" onchange="onWeightDateChange()" class="bg-transparent text-[13px] font-mono text-steel outline-none tap-scale">
+      </div>
       <div class="flex items-end gap-2 mt-2">
         <input id="weight-input" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0.0"
           class="flex-1 bg-transparent font-mono text-[52px] font-bold text-bone outline-none w-full leading-none">
@@ -154,6 +161,22 @@
 
     <h3 class="font-semibold text-[15px] mb-3">Historial reciente</h3>
     <div id="weight-history" class="space-y-2"></div>
+
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-4 mt-6 mb-6">
+      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em] mb-2">Copia de seguridad</p>
+      <p class="text-[12px] text-steel mb-3 leading-relaxed">Guarda tus datos antes de hacer cambios en la app, o restaura una copia si algo se borra.</p>
+      <div class="flex gap-3">
+        <button onclick="exportData()" class="tap-scale flex-1 py-2.5 rounded-xl bg-panelraised text-bone font-semibold text-[13px]">Exportar</button>
+        <button onclick="document.getElementById('import-file-input').click()" class="tap-scale flex-1 py-2.5 rounded-xl bg-panelraised text-bone font-semibold text-[13px]">Importar</button>
+      </div>
+      <input type="file" id="import-file-input" accept="application/json" class="hidden" onchange="importData(event)">
+
+      <div class="mt-4 pt-4 border-t border-white/[0.06]">
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em] mb-2">Registro en Excel</p>
+        <p class="text-[12px] text-steel mb-3 leading-relaxed">Un archivo .xlsx con peso, entrenamiento y macros día a día, para ver tu progreso fuera de la app.</p>
+        <button onclick="exportExcel()" class="tap-scale w-full py-2.5 rounded-xl bg-signal text-graphite font-bold text-[13px]">Descargar Excel</button>
+      </div>
+    </div>
   </section>
 
   <!-- ============ BOTTOM NAV ============ -->
@@ -209,7 +232,7 @@
       </div>
       <p id="shopping-progress" class="text-[12px] font-mono text-steel mb-4"></p>
       <div id="shopping-list-content" class="space-y-5"></div>
-      <p class="text-[12px] text-steel mt-5 pt-4 border-t border-white/[0.06] leading-relaxed">💰 Coste estimado: ~56-62€ — sigue dejándote margen de tu presupuesto semanal. No incluye la proteína en polvo (bote aparte, dura semanas).</p>
+      <p class="text-[12px] text-steel mt-5 pt-4 border-t border-white/[0.06] leading-relaxed">💰 Coste estimado: ~58-65€ — dentro de tu presupuesto semanal, con poco margen. No incluye la proteína en polvo (bote aparte, dura semanas).</p>
       <button onclick="closeShoppingModal()" class="tap-scale w-full mt-4 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cerrar</button>
     </div>
   </div>
@@ -229,73 +252,73 @@ function getDefaultDietPlan(){
   return {
     lunes: {
       comida1:{title:"Pollo con arroz y brócoli",
-        ingredients:["Pechuga de pollo: 280 g","Arroz blanco (en crudo): 160 g","Brócoli: 220 g","Aceite de oliva virgen extra: 2 cucharadas (25 ml)"],
+        ingredients:["Pechuga de pollo: 280 g","Arroz blanco (en crudo): 200 g","Brócoli: 220 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Pollo y brócoli al air fryer (180°C, ~16 min); arroz al fuego en paralelo.",
-        macros:"≈1.150 kcal · P 82g · C 140g · G 30g"},
+        macros:"≈1.083 kcal · P 82g · C 168g · G 5g"},
       comida2:{title:"Carne picada con boniato y brócoli",
-        ingredients:["Carne picada (ternera/cerdo): 280 g","Boniato: 500 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Boniato: 650 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Todo al air fryer, 20-22 min a 190°C (remueve a mitad).",
-        macros:"≈1.141 kcal · P 64g · C 114g · G 53g"}
+        macros:"≈1.187 kcal · P 64g · C 144g · G 43g"}
     },
     martes: {
       comida1:{title:"Huevos con patata y tomate",
-        ingredients:["Huevos enteros: 6 unidades","Claras de huevo: 2 unidades","Patata: 400 g","Tomate: 200 g","Aceite de oliva virgen extra: 1,5 cucharadas (20 ml)"],
+        ingredients:["Huevos enteros: 6 unidades","Claras de huevo: 2 unidades","Patata: 550 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Patata en dados al air fryer (15 min); huevos revueltos en la sartén al fuego, en paralelo.",
-        macros:"≈964 kcal · P 53g · C 79g · G 51g"},
+        macros:"≈914 kcal · P 53g · C 105g · G 31g"},
       comida2:{title:"Salmón con boniato y brócoli",
-        ingredients:["Salmón congelado: 220 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        ingredients:["Salmón congelado: 220 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Boniato al air fryer primero (18 min); añade el salmón los últimos 10-12 min.",
-        macros:"≈1.017 kcal · P 57g · C 104g · G 45g"}
+        macros:"≈980 kcal · P 57g · C 134g · G 25g"}
     },
     miercoles: {
       comida1:{title:"Bowl de atún cargado con maíz, pepinillos, aguacate y salsa de yogur",
-        ingredients:["Arroz blanco (en crudo): 160 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 100 g","Tomate: 150 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva virgen extra: 1 cucharada (15 ml)"],
+        ingredients:["Arroz blanco (en crudo): 200 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 100 g","Tomate: 150 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Arroz al fuego (o ya cocido de un lote). Salsa: mezcla el yogur con zumo de limón, sal y pimienta (opcional: un toque de mostaza o picante). El resto, en frío.",
-        macros:"≈1.266 kcal · P 77g · C 162g · G 38g"},
+        macros:"≈1.282 kcal · P 77g · C 190g · G 23g"},
       comida2:{title:"Pollo con arroz y tomate",
-        ingredients:["Muslos de pollo sin piel: 280 g","Arroz blanco (en crudo): 150 g","Tomate: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        ingredients:["Muslos de pollo sin piel: 280 g","Arroz blanco (en crudo): 190 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Pollo al air fryer (16 min); arroz al fuego en paralelo.",
-        macros:"≈1.091 kcal · P 68g · C 125g · G 35g"}
+        macros:"≈1.065 kcal · P 68g · C 153g · G 15g"}
     },
     jueves: {
       comida1:{title:"Hamburguesas de carne con patata y brócoli",
-        ingredients:["Carne picada (ternera/cerdo): 300 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        ingredients:["Carne picada (ternera/cerdo): 300 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Forma la carne en 4-5 hamburguesas y ponlo todo al air fryer, 18-20 min a 190°C.",
-        macros:"≈1.098 kcal · P 69g · C 91g · G 56g"},
+        macros:"≈1.131 kcal · P 69g · C 117g · G 46g"},
       comida2:{title:"Pollo con boniato y brócoli",
-        ingredients:["Pechuga de pollo: 280 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1,5 cucharadas (25 ml)"],
+        ingredients:["Pechuga de pollo: 280 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Todo al air fryer, 20 min a 190°C.",
-        macros:"≈962 kcal · P 77g · C 104g · G 30g"}
+        macros:"≈884 kcal · P 77g · C 134g · G 5g"}
     },
     viernes: {
       comida1:{title:"Salmón con patata y brócoli",
-        ingredients:["Salmón congelado: 220 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        ingredients:["Salmón congelado: 220 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Patata y brócoli al air fryer 15 min; añade el salmón los últimos 10-12 min.",
-        macros:"≈973 kcal · P 59g · C 91g · G 45g"},
+        macros:"≈923 kcal · P 59g · C 117g · G 25g"},
       comida2:{title:"Huevos con patata, pepino y tomate",
-        ingredients:["Huevos enteros: 6 unidades","Patata: 400 g","Pepino: 100 g","Tomate: 150 g","Aceite de oliva virgen extra: 1 cucharada (20 ml)"],
+        ingredients:["Huevos enteros: 6 unidades","Patata: 550 g","Pepino: 100 g","Tomate: 150 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Patata al air fryer (15 min) mientras haces los huevos en la sartén, en paralelo.",
-        macros:"≈971 kcal · P 53g · C 81g · G 51g"}
+        macros:"≈921 kcal · P 53g · C 107g · G 31g"}
     },
     sabado: {
       comida1:{title:"Bowl de atún cargado con maíz, pepinillos, aguacate y salsa de yogur",
-        ingredients:["Arroz blanco (en crudo): 150 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 150 g","Tomate: 100 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva virgen extra: 1 cucharada (15 ml)"],
+        ingredients:["Arroz blanco (en crudo): 190 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 150 g","Tomate: 100 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Igual que el de miércoles — arroz al fuego (o de un lote), salsa de yogur, y el resto en frío.",
-        macros:"≈1.230 kcal · P 76g · C 155g · G 38g"},
+        macros:"≈1.163 kcal · P 76g · C 183g · G 13g"},
       comida2:{title:"Carne picada con patata y brócoli",
-        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Todo al air fryer, 20 min a 190°C.",
-        macros:"≈1.058 kcal · P 65g · C 91g · G 53g"}
+        macros:"≈1.091 kcal · P 65g · C 117g · G 43g"}
     },
     domingo: {
       comida1:{title:"Pollo con boniato y brócoli",
-        ingredients:["Muslos de pollo sin piel: 280 g","Boniato: 450 g","Brócoli: 200 g","Aceite de oliva virgen extra: 2 cucharadas (25 ml)"],
+        ingredients:["Muslos de pollo sin piel: 280 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Cocina el doble hoy (2 tandas de air fryer) para adelantar proteína de la semana.",
-        macros:"≈1.027 kcal · P 69g · C 104g · G 40g"},
+        macros:"≈949 kcal · P 69g · C 134g · G 15g"},
       comida2:{title:"Carne picada con patata y tomate",
-        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 450 g","Tomate: 200 g","Aceite de oliva virgen extra: 1 cucharada (10 ml)"],
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 600 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Todo al air fryer, 18-20 min a 190°C.",
-        macros:"≈1.026 kcal · P 61g · C 84g · G 53g"}
+        macros:"≈1.059 kcal · P 61g · C 110g · G 43g"}
     }
   };
 }
@@ -303,8 +326,8 @@ function getDefaultDietPlan(){
 const shoppingListData = {
   "Proteínas": ["Pechuga de pollo: 560 g","Muslos de pollo (sin piel): 560 g","Carne picada (ternera/cerdo): ~1,14 kg","Salmón congelado: 440 g","Atún en lata: 5 latas","Huevos: 18 unidades","Yogur griego natural: ~1,2 kg"],
   "Verduras": ["Brócoli (fresco o congelado): 1,6 kg","Pepino: 350 g (2-3 unidades)","Tomate: 1 kg (6-7 unidades)","Maíz dulce enlatado: 1-2 latas pequeñas","Pepinillos: 1 bote pequeño","Plátano: 7 unidades (1 por día)"],
-  "Carbohidratos": ["Patata: 2,6 kg","Boniato: 1,85 kg","Arroz blanco: 620 g","Avena: 350 g"],
-  "Grasas": ["Aceite de oliva virgen extra: ~300 ml","Aguacate: 2 unidades","Frutos secos (almendras u otros): ~40 g"]
+  "Carbohidratos": ["Patata: 3,5 kg","Boniato: 2,45 kg","Arroz blanco: 780 g","Avena: 350 g"],
+  "Grasas": ["Aceite de oliva en spray: 1 bote","Aguacate: 2 unidades","Frutos secos (almendras u otros): ~40 g"]
 };
 
 const DAILY_TARGETS = {kcal:2700, p:180, c:325, f:75};
@@ -420,10 +443,10 @@ function renderDieta(){
   const gaugeWrap = document.getElementById('dieta-progress-wrap');
   gaugeWrap.style.display = isToday ? 'block' : 'none';
   let completedCount = 0;
-  ['comida1','comida2','snack'].forEach(k=>{ if(completions[todayISO+'_'+k]) completedCount++; });
+  ['comida1','comida2','creatine','snack'].forEach(k=>{ if(completions[todayISO+'_'+k]) completedCount++; });
   const circumference = 263.9;
-  document.getElementById('gauge-fill').style.strokeDashoffset = circumference*(1-completedCount/3);
-  document.getElementById('dieta-progress-frac').textContent = completedCount+'/3';
+  document.getElementById('gauge-fill').style.strokeDashoffset = circumference*(1-completedCount/4);
+  document.getElementById('dieta-progress-frac').textContent = completedCount+'/4';
 
   if(isToday){
     const todayPlan = plan[dayNames[todayIdx]];
@@ -462,7 +485,23 @@ function renderDieta(){
     container.appendChild(card);
   });
 
-  // snack card (fijo, igual todos los días)
+  // tarjeta de creatina (fija, igual todos los días)
+  const creatineDone = isToday && !!completions[todayISO+'_creatine'];
+  const creatineCard = document.createElement('div');
+  creatineCard.className = `bg-panel border rounded-2xl p-4 ${creatineDone?'border-signal/40':'border-white/[0.06]'}`;
+  creatineCard.innerHTML = `
+    <div class="flex justify-between items-center">
+      <div>
+        <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">Suplemento diario</span>
+        <h3 class="font-bold text-[16px] leading-snug mt-1 ${creatineDone?'line-through text-steel':''}">Creatina — 5 g</h3>
+        <p class="text-[12.5px] text-steel mt-1">A cualquier hora, disuelta en agua o con la comida.</p>
+      </div>
+      ${isToday?`<button class="tap-scale shrink-0 ml-3 w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold ${creatineDone?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleCreatineComplete()">${creatineDone?'✓':''}</button>`:''}
+    </div>
+  `;
+  container.appendChild(creatineCard);
+
+  // tarjeta del batido (fija, igual todos los días)
   const snackDone = isToday && !!completions[todayISO+'_snack'];
   const snackCard = document.createElement('div');
   snackCard.className = `bg-panel border rounded-2xl p-4 ${snackDone?'border-signal/40':'border-white/[0.06]'}`;
@@ -490,6 +529,14 @@ function toggleMealComplete(mealKey){
   const todayISO = toISODate(new Date());
   const completions = loadCompletions();
   const key = todayISO+'_'+mealKey;
+  completions[key] = !completions[key];
+  saveCompletions(completions);
+  renderDieta();
+}
+function toggleCreatineComplete(){
+  const todayISO = toISODate(new Date());
+  const completions = loadCompletions();
+  const key = todayISO+'_creatine';
   completions[key] = !completions[key];
   saveCompletions(completions);
   renderDieta();
@@ -755,18 +802,30 @@ function renderPeso(){
   }
 
   const todayISO = toISODate(new Date());
-  const todayEntry = entries.find(e=>e.date===todayISO);
-  document.getElementById('weight-input').value = todayEntry ? todayEntry.weight : '';
+  const dateInput = document.getElementById('weight-date-input');
+  if(!dateInput.max) dateInput.max = todayISO;
+  if(!dateInput.value) dateInput.value = todayISO;
+  updateWeightInputForDate();
+}
+
+function updateWeightInputForDate(){
+  const entries = loadWeightEntries();
+  const selectedDate = document.getElementById('weight-date-input').value;
+  const entry = entries.find(e=>e.date===selectedDate);
+  document.getElementById('weight-input').value = entry ? entry.weight : '';
+}
+function onWeightDateChange(){
+  updateWeightInputForDate();
 }
 
 function saveWeight(){
   const raw = document.getElementById('weight-input').value.replace(',', '.');
   const val = parseFloat(raw);
   if(isNaN(val) || val<=0) return;
+  const selectedDate = document.getElementById('weight-date-input').value || toISODate(new Date());
   const entries = loadWeightEntries();
-  const todayISO = toISODate(new Date());
-  const idx = entries.findIndex(e=>e.date===todayISO);
-  if(idx>=0) entries[idx].weight = val; else entries.push({date:todayISO, weight:val});
+  const idx = entries.findIndex(e=>e.date===selectedDate);
+  if(idx>=0) entries[idx].weight = val; else entries.push({date:selectedDate, weight:val});
   saveWeightEntries(entries);
   renderPeso();
 }
@@ -774,6 +833,96 @@ function deleteWeightEntry(date){
   const entries = loadWeightEntries().filter(e=>e.date!==date);
   saveWeightEntries(entries);
   renderPeso();
+}
+const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack'];
+function exportData(){
+  const data = {};
+  BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const fileName = `tracker-backup-${toISODate(new Date())}.json`;
+  const file = new File([blob], fileName, {type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file], title:'Copia de seguridad del tracker'}).catch(()=>{});
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      BACKUP_KEYS.forEach(k=>{ if(data[k]!==undefined) localStorage.setItem(k, data[k]); });
+      alert('Copia restaurada correctamente.');
+      location.reload();
+    }catch(err){
+      alert('Ese archivo no es una copia de seguridad válida.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function getAllTrackedDates(){
+  const dates = new Set();
+  loadWeightEntries().forEach(e=>dates.add(e.date));
+  Object.keys(loadWorkoutDays()).forEach(d=>dates.add(d));
+  const completions = loadCompletions();
+  Object.keys(completions).forEach(k=>{
+    if(completions[k]) dates.add(k.substring(0,10));
+  });
+  return Array.from(dates).sort();
+}
+function getMacrosForDate(dateStr){
+  const plan = loadDietPlan();
+  const snack = loadDailySnack();
+  const dayPlan = plan[dayNames[new Date(dateStr+'T00:00:00').getDay()]];
+  const completions = loadCompletions();
+  const totals = {kcal:0,p:0,c:0,f:0};
+  ['comida1','comida2'].forEach(k=>{
+    if(completions[dateStr+'_'+k]) sumMacros(totals, parseMacros(dayPlan[k].macros));
+  });
+  if(completions[dateStr+'_snack']) sumMacros(totals, parseMacros(snack.macros));
+  return totals;
+}
+function exportExcel(){
+  const dates = getAllTrackedDates();
+  if(dates.length===0){ alert('Todavía no hay datos registrados.'); return; }
+  const weightEntries = loadWeightEntries();
+  const workoutDays = loadWorkoutDays();
+  const completions = loadCompletions();
+  const rows = [['Fecha','Peso (kg)','Entrenamiento','Creatina','Calorías','Proteína (g)','Carbohidratos (g)','Grasas (g)']];
+  dates.forEach(date=>{
+    const w = weightEntries.find(e=>e.date===date);
+    const trainState = workoutDays[date];
+    const trainLabel = trainState==='trained' ? 'Entrenado' : trainState==='rest' ? 'Descanso' : '';
+    const creatineLabel = completions[date+'_creatine'] ? 'Sí' : '';
+    const m = getMacrosForDate(date);
+    rows.push([date, w?w.weight:'', trainLabel, creatineLabel, m.kcal||'', m.p||'', m.c||'', m.f||'']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:13},{wch:10},{wch:10},{wch:12},{wch:16},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Registro');
+  const arrayBuffer = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+  const blob = new Blob([arrayBuffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const fileName = `tracker-registro-${toISODate(new Date())}.xlsx`;
+  const file = new File([blob], fileName, {type: blob.type});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file], title:'Registro del tracker'}).catch(()=>{});
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 function attachSwipeHandlers(){
   document.querySelectorAll('.weight-row').forEach(row=>{
