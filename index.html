@@ -114,6 +114,14 @@
       <div id="streak-emoji" class="text-4xl transition-opacity">🔥</div>
     </div>
 
+    <div id="steps-card" class="hidden bg-panel border border-white/[0.06] rounded-2xl p-4 mb-6 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Pasos de hoy</p>
+        <p class="mt-1 font-mono font-bold text-[22px]"><span id="steps-count">0</span></p>
+      </div>
+      <span class="text-[11px] text-steel">vía Salud 🔗</span>
+    </div>
+
     <div class="flex items-center justify-between mb-4">
       <button onclick="changeMonth(-1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">‹</button>
       <span id="month-label" class="font-semibold text-[15px]"></span>
@@ -363,6 +371,8 @@ function loadCompletions(){ return JSON.parse(localStorage.getItem('mealCompleti
 function saveCompletions(c){ localStorage.setItem('mealCompletions', JSON.stringify(c)); }
 function loadWorkoutDays(){ return JSON.parse(localStorage.getItem('workoutDays')||'{}'); }
 function saveWorkoutDays(w){ localStorage.setItem('workoutDays', JSON.stringify(w)); }
+function loadStepsEntries(){ return JSON.parse(localStorage.getItem('stepsEntries')||'{}'); }
+function saveStepsEntries(s){ localStorage.setItem('stepsEntries', JSON.stringify(s)); }
 function loadWeightEntries(){ return JSON.parse(localStorage.getItem('weightEntries')||'[]'); }
 function saveWeightEntries(e){ localStorage.setItem('weightEntries', JSON.stringify(e)); }
 function loadShoppingChecked(){ return JSON.parse(localStorage.getItem('shoppingChecked')||'{}'); }
@@ -694,6 +704,17 @@ function countRestDaysInWeek(dateObj, workoutDays){
 function renderEntreno(){
   const workoutDays = loadWorkoutDays();
 
+  // pasos de hoy (si han llegado desde Salud)
+  const stepsEntries = loadStepsEntries();
+  const todaySteps = stepsEntries[toISODate(new Date())];
+  const stepsCard = document.getElementById('steps-card');
+  if(todaySteps){
+    stepsCard.classList.remove('hidden');
+    document.getElementById('steps-count').textContent = todaySteps.toLocaleString('es-ES');
+  } else {
+    stepsCard.classList.add('hidden');
+  }
+
   // racha: los días de descanso no la rompen, pero tampoco suman
   let streak = 0;
   let cursor = new Date();
@@ -846,7 +867,7 @@ function deleteWeightEntry(date){
   saveWeightEntries(entries);
   renderPeso();
 }
-const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack'];
+const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','stepsEntries'];
 function exportData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -885,6 +906,7 @@ function getAllTrackedDates(){
   const dates = new Set();
   loadWeightEntries().forEach(e=>dates.add(e.date));
   Object.keys(loadWorkoutDays()).forEach(d=>dates.add(d));
+  Object.keys(loadStepsEntries()).forEach(d=>dates.add(d));
   const completions = loadCompletions();
   Object.keys(completions).forEach(k=>{
     if(completions[k]) dates.add(k.substring(0,10));
@@ -909,17 +931,19 @@ function exportExcel(){
   const weightEntries = loadWeightEntries();
   const workoutDays = loadWorkoutDays();
   const completions = loadCompletions();
-  const rows = [['Fecha','Peso (kg)','Entrenamiento','Creatina','Calorías','Proteína (g)','Carbohidratos (g)','Grasas (g)']];
+  const stepsEntries = loadStepsEntries();
+  const rows = [['Fecha','Peso (kg)','Pasos','Entrenamiento','Creatina','Calorías','Proteína (g)','Carbohidratos (g)','Grasas (g)']];
   dates.forEach(date=>{
     const w = weightEntries.find(e=>e.date===date);
     const trainState = workoutDays[date];
     const trainLabel = trainState==='trained' ? 'Entrenado' : trainState==='rest' ? 'Descanso' : '';
     const creatineLabel = completions[date+'_creatine'] ? 'Sí' : '';
+    const stepsVal = stepsEntries[date] || '';
     const m = getMacrosForDate(date);
-    rows.push([date, w?w.weight:'', trainLabel, creatineLabel, m.kcal||'', m.p||'', m.c||'', m.f||'']);
+    rows.push([date, w?w.weight:'', stepsVal, trainLabel, creatineLabel, m.kcal||'', m.p||'', m.c||'', m.f||'']);
   });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:10},{wch:13},{wch:10},{wch:10},{wch:12},{wch:16},{wch:10}];
+  ws['!cols'] = [{wch:12},{wch:10},{wch:9},{wch:13},{wch:10},{wch:10},{wch:12},{wch:16},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Registro');
   const arrayBuffer = XLSX.write(wb, {type:'array', bookType:'xlsx'});
@@ -959,6 +983,7 @@ function attachSwipeHandlers(){
    ============================================================ */
 function handleURLParams(){
   const params = new URLSearchParams(window.location.search);
+  let touched = false;
   if(params.has('peso')){
     const val = parseFloat(params.get('peso').replace(',','.'));
     if(!isNaN(val) && val>0){
@@ -968,8 +993,18 @@ function handleURLParams(){
       if(idx>=0) entries[idx].weight = val; else entries.push({date:todayISO, weight:val});
       saveWeightEntries(entries);
     }
-    window.history.replaceState({}, document.title, window.location.pathname);
+    touched = true;
   }
+  if(params.has('pasos')){
+    const val = parseInt(params.get('pasos'));
+    if(!isNaN(val) && val>=0){
+      const steps = loadStepsEntries();
+      steps[toISODate(new Date())] = val;
+      saveStepsEntries(steps);
+    }
+    touched = true;
+  }
+  if(touched) window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 /* ============================================================
