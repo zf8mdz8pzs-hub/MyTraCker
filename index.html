@@ -57,6 +57,11 @@
   }
   input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .modal-sheet { transition: transform .28s cubic-bezier(.32,.72,0,1); }
+  .bg-panel { box-shadow: 0 1px 2px rgba(0,0,0,.28), 0 4px 10px -4px rgba(0,0,0,.35); }
+  @keyframes viewFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .view-active { animation: viewFadeIn .28s cubic-bezier(.22,.61,.36,1); }
+  .nav-dot { width: 3px; height: 3px; border-radius: 999px; background: currentColor; opacity: 0; transition: opacity .15s ease; }
+  .nav-btn.text-signal .nav-dot { opacity: 1; }
 </style>
 </head>
 <body class="bg-graphite text-bone">
@@ -182,17 +187,20 @@
   <!-- ============ BOTTOM NAV ============ -->
   <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-panel/85 backdrop-blur-xl border-t border-white/[0.07]">
     <div class="flex items-stretch h-[64px] max-w-md mx-auto">
-      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="dieta" onclick="showTab('dieta')">
-        <span class="text-[20px]">🥩</span>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-1" data-tab="dieta" onclick="showTab('dieta')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
         <span class="text-[10px] font-semibold tracking-wide">Dieta</span>
+        <span class="nav-dot"></span>
       </button>
-      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="entreno" onclick="showTab('entreno')">
-        <span class="text-[20px]">🏋️</span>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-1" data-tab="entreno" onclick="showTab('entreno')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="4" height="6" rx="1"/><rect x="18" y="9" width="4" height="6" rx="1"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="9" x2="9" y2="15"/><line x1="15" y1="9" x2="15" y2="15"/></svg>
         <span class="text-[10px] font-semibold tracking-wide">Entreno</span>
+        <span class="nav-dot"></span>
       </button>
-      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-0.5" data-tab="peso" onclick="showTab('peso')">
-        <span class="text-[20px]">📉</span>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-1" data-tab="peso" onclick="showTab('peso')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg>
         <span class="text-[10px] font-semibold tracking-wide">Peso</span>
+        <span class="nav-dot"></span>
       </button>
     </div>
   </nav>
@@ -261,40 +269,40 @@ function getDefaultDietPlan(){
         macros:"≈1.187 kcal · P 64g · C 144g · G 43g"}
     },
     martes: {
-      comida1:{title:"Huevos con patata y tomate",
-        ingredients:["Huevos enteros: 6 unidades","Claras de huevo: 2 unidades","Patata: 550 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Patata en dados al air fryer (15 min); huevos revueltos en la sartén al fuego, en paralelo.",
-        macros:"≈914 kcal · P 53g · C 105g · G 31g"},
-      comida2:{title:"Salmón con boniato y brócoli",
-        ingredients:["Salmón congelado: 220 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Boniato al air fryer primero (18 min); añade el salmón los últimos 10-12 min.",
-        macros:"≈980 kcal · P 57g · C 134g · G 25g"}
+      comida1:{title:"Huevos con patata, tomate y pimientos del piquillo",
+        ingredients:["Huevos enteros: 6 unidades","Claras de huevo: 2 unidades","Patata: 550 g","Tomate: 200 g","Pimientos del piquillo: 50 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Patata en dados al air fryer (15 min); huevos revueltos en la sartén al fuego, en paralelo. Añade el piquillo troceado los últimos 2 min, ya viene asado.",
+        macros:"≈922 kcal · P 54g · C 108g · G 31g"},
+      comida2:{title:"Salmón con boniato, brócoli y alcaparras",
+        ingredients:["Salmón congelado: 220 g","Boniato: 600 g","Brócoli: 200 g","Alcaparras: 15 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Boniato al air fryer primero (18 min); añade el salmón los últimos 10-12 min. Espolvorea las alcaparras por encima al servir, sin cocinar.",
+        macros:"≈983 kcal · P 57g · C 134g · G 25g"}
     },
     miercoles: {
       comida1:{title:"Bowl de atún cargado con maíz, pepinillos, aguacate y salsa de yogur",
         ingredients:["Arroz blanco (en crudo): 200 g","Atún en lata: 2,5 latas (200 g escurrido)","Pepino: 100 g","Tomate: 150 g","Maíz dulce enlatado: 80 g","Pepinillos: 30 g","Aguacate: 70 g","Frutos secos (almendras u otros): 15 g","Yogur griego natural: 80 g (para la salsa)","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Arroz al fuego (o ya cocido de un lote). Salsa: mezcla el yogur con zumo de limón, sal y pimienta (opcional: un toque de mostaza o picante). El resto, en frío.",
         macros:"≈1.282 kcal · P 77g · C 190g · G 23g"},
-      comida2:{title:"Pollo con arroz y tomate",
-        ingredients:["Muslos de pollo sin piel: 280 g","Arroz blanco (en crudo): 190 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Pollo al air fryer (16 min); arroz al fuego en paralelo.",
-        macros:"≈1.065 kcal · P 68g · C 153g · G 15g"}
+      comida2:{title:"Pollo con arroz, tomate y pimientos del piquillo",
+        ingredients:["Muslos de pollo sin piel: 280 g","Arroz blanco (en crudo): 190 g","Tomate: 200 g","Pimientos del piquillo: 50 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Pollo al air fryer (16 min), añade el piquillo troceado los últimos 3-4 min (ya viene asado, solo se calienta); arroz al fuego en paralelo.",
+        macros:"≈1.073 kcal · P 69g · C 156g · G 15g"}
     },
     jueves: {
-      comida1:{title:"Hamburguesas de carne con patata y brócoli",
-        ingredients:["Carne picada (ternera/cerdo): 300 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Forma la carne en 4-5 hamburguesas y ponlo todo al air fryer, 18-20 min a 190°C.",
-        macros:"≈1.131 kcal · P 69g · C 117g · G 46g"},
+      comida1:{title:"Hamburguesas de carne con aceitunas, patata y brócoli",
+        ingredients:["Carne picada (ternera/cerdo): 300 g","Aceitunas negras (picadas): 20 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Mezcla las aceitunas picadas con la carne antes de formar las 4-5 hamburguesas; ponlo todo al air fryer, 18-20 min a 190°C.",
+        macros:"≈1.155 kcal · P 69g · C 118g · G 48g"},
       comida2:{title:"Pollo con boniato y brócoli",
         ingredients:["Pechuga de pollo: 280 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Todo al air fryer, 20 min a 190°C.",
         macros:"≈884 kcal · P 77g · C 134g · G 5g"}
     },
     viernes: {
-      comida1:{title:"Salmón con patata y brócoli",
-        ingredients:["Salmón congelado: 220 g","Patata: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Patata y brócoli al air fryer 15 min; añade el salmón los últimos 10-12 min.",
-        macros:"≈923 kcal · P 59g · C 117g · G 25g"},
+      comida1:{title:"Salmón con patata, brócoli y alcaparras",
+        ingredients:["Salmón congelado: 220 g","Patata: 600 g","Brócoli: 200 g","Alcaparras: 15 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Patata y brócoli al air fryer 15 min; añade el salmón los últimos 10-12 min. Alcaparras por encima al servir, sin cocinar.",
+        macros:"≈926 kcal · P 59g · C 117g · G 25g"},
       comida2:{title:"Huevos con patata, pepino y tomate",
         ingredients:["Huevos enteros: 6 unidades","Patata: 550 g","Pepino: 100 g","Tomate: 150 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Patata al air fryer (15 min) mientras haces los huevos en la sartén, en paralelo.",
@@ -315,17 +323,17 @@ function getDefaultDietPlan(){
         ingredients:["Muslos de pollo sin piel: 280 g","Boniato: 600 g","Brócoli: 200 g","Aceite de oliva en spray (unas pasadas)"],
         method:"🔥 Cocina el doble hoy (2 tandas de air fryer) para adelantar proteína de la semana.",
         macros:"≈949 kcal · P 69g · C 134g · G 15g"},
-      comida2:{title:"Carne picada con patata y tomate",
-        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 600 g","Tomate: 200 g","Aceite de oliva en spray (unas pasadas)"],
-        method:"🔥 Todo al air fryer, 18-20 min a 190°C.",
-        macros:"≈1.059 kcal · P 61g · C 110g · G 43g"}
+      comida2:{title:"Carne picada con patata, tomate y pimientos del piquillo",
+        ingredients:["Carne picada (ternera/cerdo): 280 g","Patata: 600 g","Tomate: 200 g","Pimientos del piquillo: 50 g","Aceite de oliva en spray (unas pasadas)"],
+        method:"🔥 Todo al air fryer, 18-20 min a 190°C. Añade el piquillo troceado los últimos 3-4 min, ya viene asado.",
+        macros:"≈1.067 kcal · P 61g · C 113g · G 43g"}
     }
   };
 }
 
 const shoppingListData = {
   "Proteínas": ["Pechuga de pollo: 560 g","Muslos de pollo (sin piel): 560 g","Carne picada (ternera/cerdo): ~1,14 kg","Salmón congelado: 440 g","Atún en lata: 5 latas","Huevos: 18 unidades","Yogur griego natural: ~1,2 kg"],
-  "Verduras": ["Brócoli (fresco o congelado): 1,6 kg","Pepino: 350 g (2-3 unidades)","Tomate: 1 kg (6-7 unidades)","Maíz dulce enlatado: 1-2 latas pequeñas","Pepinillos: 1 bote pequeño","Plátano: 7 unidades (1 por día)"],
+  "Verduras": ["Brócoli (fresco o congelado): 1,6 kg","Pepino: 350 g (2-3 unidades)","Tomate: 1 kg (6-7 unidades)","Maíz dulce enlatado: 1-2 latas pequeñas","Pepinillos: 1 bote pequeño","Plátano: 7 unidades (1 por día)","Pimientos del piquillo: 1 lata o frasco (150 g)","Alcaparras: 1 frasco pequeño","Aceitunas negras: 1 bote pequeño"],
   "Carbohidratos": ["Patata: 3,5 kg","Boniato: 2,45 kg","Arroz blanco: 780 g","Avena: 350 g"],
   "Grasas": ["Aceite de oliva en spray: 1 bote","Aguacate: 2 unidades","Frutos secos (almendras u otros): ~40 g"]
 };
@@ -375,6 +383,10 @@ function showTab(tab){
     btn.classList.toggle('text-signal', btn.dataset.tab===tab);
     btn.classList.toggle('text-steel', btn.dataset.tab!==tab);
   });
+  const activeEl = document.getElementById('view-'+tab);
+  activeEl.classList.remove('view-active');
+  void activeEl.offsetWidth;
+  activeEl.classList.add('view-active');
   if(tab==='dieta') renderDieta();
   if(tab==='entreno') renderEntreno();
   if(tab==='peso') renderPeso();
@@ -943,8 +955,27 @@ function attachSwipeHandlers(){
 }
 
 /* ============================================================
+   PUENTE CON SALUD (vía Atajos + parámetro en la URL)
+   ============================================================ */
+function handleURLParams(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.has('peso')){
+    const val = parseFloat(params.get('peso').replace(',','.'));
+    if(!isNaN(val) && val>0){
+      const entries = loadWeightEntries();
+      const todayISO = toISODate(new Date());
+      const idx = entries.findIndex(e=>e.date===todayISO);
+      if(idx>=0) entries[idx].weight = val; else entries.push({date:todayISO, weight:val});
+      saveWeightEntries(entries);
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
+handleURLParams();
 showTab(state.activeTab);
 </script>
 </body>
