@@ -75,29 +75,24 @@
         <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Plan de alimentación</p>
         <h1 id="dieta-title" class="text-[26px] font-bold mt-1 leading-tight">Hoy</h1>
       </div>
-      <button onclick="openShoppingModal()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px] mt-1">🛒</button>
+      <div class="flex items-center gap-2 mt-1 shrink-0">
+        <button onclick="openFoodChatModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">💬</button>
+        <button onclick="openPantryModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">🥕</button>
+        <button onclick="openShoppingModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">🛒</button>
+      </div>
     </header>
 
-    <div id="dieta-day-chips" class="flex gap-2 overflow-x-auto pb-5 -mx-5 px-5"></div>
-
     <div id="dieta-progress-wrap" class="bg-panel border border-white/[0.06] rounded-2xl p-4 mb-5">
-      <div class="flex items-center gap-4">
-        <svg viewBox="0 0 100 100" class="w-14 h-14 -rotate-90 shrink-0">
-          <circle cx="50" cy="50" r="42" fill="none" stroke="#242429" stroke-width="9"/>
-          <circle id="gauge-fill" cx="50" cy="50" r="42" fill="none" stroke="#F0A431" stroke-width="9"
-            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
-            style="transition: stroke-dashoffset .4s ease;"/>
-        </svg>
-        <div>
-          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Progreso de hoy</p>
-          <p class="text-2xl font-bold font-mono mt-0.5"><span id="dieta-progress-frac">0/3</span></p>
-        </div>
-      </div>
-      <div id="dieta-macro-bars" class="mt-4 pt-4 border-t border-white/[0.06] space-y-2.5"></div>
+      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Macros de hoy</p>
+      <div id="dieta-macro-bars" class="mt-3 space-y-2.5"></div>
     </div>
 
     <div id="dieta-meals" class="space-y-4"></div>
+
+    <h3 class="font-semibold text-[15px] mt-6 mb-3">Recetas para ti</h3>
+    <div id="dieta-recipes-list" class="space-y-4"></div>
   </section>
+
 
   <!-- ============ ENTRENAMIENTO ============ -->
   <section id="view-entreno" class="view hidden-view px-5 safe-top">
@@ -112,14 +107,6 @@
         <p class="mt-1 font-mono font-bold text-signal"><span id="streak-count" class="text-[34px] leading-none">0</span><span class="text-base text-steel ml-1">días</span></p>
       </div>
       <div id="streak-emoji" class="text-4xl transition-opacity">🔥</div>
-    </div>
-
-    <div id="steps-card" class="hidden bg-panel border border-white/[0.06] rounded-2xl p-4 mb-6 flex items-center justify-between">
-      <div>
-        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Pasos de hoy</p>
-        <p class="mt-1 font-mono font-bold text-[22px]"><span id="steps-count">0</span></p>
-      </div>
-      <span class="text-[11px] text-steel">vía Salud 🔗</span>
     </div>
 
     <div class="flex items-center justify-between mb-4">
@@ -192,6 +179,44 @@
     </div>
   </section>
 
+  <!-- ============ GASTOS ============ -->
+  <section id="view-gastos" class="view hidden-view px-5 safe-top">
+    <header class="pb-5 flex items-start justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Finanzas</p>
+        <h1 class="text-[26px] font-bold mt-1 leading-tight">Tus gastos</h1>
+      </div>
+      <button onclick="openBudgetModal()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px] mt-1">⚙️</button>
+    </header>
+
+    <div class="flex items-center justify-between mb-5">
+      <button onclick="changeFinanceMonth(-1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">‹</button>
+      <span id="gastos-month-label" class="font-semibold text-[15px] capitalize"></span>
+      <button onclick="changeFinanceMonth(1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">›</button>
+    </div>
+
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-4 mb-5">
+      <div class="flex items-center gap-4">
+        <svg viewBox="0 0 100 100" class="w-14 h-14 -rotate-90 shrink-0">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#242429" stroke-width="9"/>
+          <circle id="gastos-gauge-fill" cx="50" cy="50" r="42" fill="none" stroke="#F0A431" stroke-width="9"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
+            style="transition: stroke-dashoffset .4s ease, stroke .3s ease;"/>
+        </svg>
+        <div>
+          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Gastado este mes</p>
+          <p class="text-2xl font-bold font-mono mt-0.5"><span id="gastos-total-spent">0,00€</span><span class="text-steel text-base font-semibold"> / <span id="gastos-total-limit">0,00€</span></span></p>
+        </div>
+      </div>
+      <div id="gastos-category-bars" class="mt-4 pt-4 border-t border-white/[0.06] space-y-2.5"></div>
+    </div>
+
+    <button onclick="openAddExpenseModal()" class="tap-scale w-full mb-6 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">+ Añadir gasto</button>
+
+    <h3 class="font-semibold text-[15px] mb-3">Movimientos del mes</h3>
+    <div id="gastos-list" class="space-y-2"></div>
+  </section>
+
   <!-- ============ BOTTOM NAV ============ -->
   <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-panel/85 backdrop-blur-xl border-t border-white/[0.07]">
     <div class="flex items-stretch h-[64px] max-w-md mx-auto">
@@ -210,29 +235,13 @@
         <span class="text-[10px] font-semibold tracking-wide">Peso</span>
         <span class="nav-dot"></span>
       </button>
+      <button class="nav-btn tap-scale flex-1 flex flex-col items-center justify-center gap-1" data-tab="gastos" onclick="showTab('gastos')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+        <span class="text-[10px] font-semibold tracking-wide">Gastos</span>
+        <span class="nav-dot"></span>
+      </button>
     </div>
   </nav>
-
-  <!-- ============ EDIT MODAL ============ -->
-  <div id="edit-modal" class="fixed inset-0 z-50 hidden-view">
-    <div class="absolute inset-0 bg-black/65" onclick="closeEditModal()"></div>
-    <div id="edit-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
-      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
-      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]" id="edit-modal-eyebrow">Comida 1</p>
-      <h3 class="font-bold text-lg mt-1 mb-4" id="edit-modal-title">Editar comida</h3>
-
-      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Ingredientes</label>
-      <textarea id="edit-ingredients" rows="6" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm leading-relaxed outline-none"></textarea>
-
-      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em] mt-4 block">Notas / método</label>
-      <textarea id="edit-notes" rows="3" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm leading-relaxed outline-none" placeholder="p. ej. tiempos de air fryer, sustituciones..."></textarea>
-
-      <div class="flex gap-3 mt-5">
-        <button onclick="closeEditModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
-        <button onclick="saveEdit()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ============ SHOPPING LIST MODAL ============ -->
   <div id="shopping-modal" class="fixed inset-0 z-50 hidden-view">
@@ -253,6 +262,106 @@
     </div>
   </div>
 
+  <!-- ============ FOOD LOG CHAT MODAL ============ -->
+  <div id="food-chat-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeFoodChatModal()"></div>
+    <div id="food-chat-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] flex flex-col" style="height: 82vh; transform: translateY(100%);">
+      <div class="px-5 pt-5 shrink-0">
+        <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-4"></div>
+        <div class="flex items-center justify-between mb-1">
+          <div>
+            <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Registro libre</p>
+            <h3 class="font-bold text-lg mt-0.5">¿Qué has comido?</h3>
+          </div>
+          <button onclick="closeFoodChatModal()" class="tap-scale w-9 h-9 rounded-full bg-panelraised flex items-center justify-center text-steel text-lg">✕</button>
+        </div>
+      </div>
+
+      <div id="food-chat-messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
+
+      <div class="shrink-0 px-5 pt-3 border-t border-white/[0.06]" style="padding-bottom: calc(14px + env(safe-area-inset-bottom));">
+        <div class="flex items-end gap-2">
+          <textarea id="food-chat-input" rows="1" placeholder="p. ej. 300g de pechuga de pollo con 300g de arroz cocido y 200g de brócoli"
+            class="flex-1 bg-panelraised rounded-2xl px-4 py-3 text-bone text-[14px] outline-none resize-none max-h-28" oninput="autoGrowTextarea(this)" onkeydown="handleFoodChatKeydown(event)"></textarea>
+          <button id="food-chat-send-btn" onclick="sendFoodLogMessage()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-signal text-graphite flex items-center justify-center font-bold text-lg">↑</button>
+        </div>
+        <p class="text-[10.5px] text-steel mt-2 leading-relaxed">Estimación automática — puede variar según ingredientes y preparación exacta.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANTRY / RECIPE MODAL ============ -->
+  <div id="pantry-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closePantryModal()"></div>
+    <div id="pantry-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Despensa</p>
+      <h3 class="font-bold text-lg mt-1 mb-4">Recetas con lo que has comprado</h3>
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">¿Qué tienes en casa?</label>
+      <textarea id="pantry-input" rows="3" placeholder="p. ej. pechuga de pollo, arroz, brócoli, huevos, aguacate"
+        class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm leading-relaxed outline-none resize-none"></textarea>
+
+      <button type="button" onclick="document.getElementById('receipt-file-input').click()" class="tap-scale w-full mt-2 py-2.5 rounded-xl bg-panelraised text-bone font-semibold text-[13px] flex items-center justify-center gap-1.5">📷 Escanear ticket de la compra</button>
+      <input type="file" id="receipt-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(event)">
+      <p id="receipt-status" class="text-[11px] text-steel mt-1.5 hidden"></p>
+
+      <button id="pantry-generate-btn" onclick="generatePantryRecipes()" class="tap-scale w-full mt-3 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Generar recetas</button>
+      <p class="text-[10.5px] text-steel mt-2 leading-relaxed">Estimación automática de macros — puede variar según ingredientes y preparación exacta.</p>
+
+      <div id="pantry-recipes" class="mt-6 space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- ============ ADD EXPENSE MODAL ============ -->
+  <div id="expense-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeAddExpenseModal()"></div>
+    <div id="expense-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Nuevo gasto</p>
+      <h3 class="font-bold text-lg mt-1 mb-4">Añadir gasto</h3>
+
+      <div class="flex items-end gap-2 mb-4">
+        <input id="expense-amount-input" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0.00"
+          class="flex-1 bg-transparent font-mono text-[44px] font-bold text-bone outline-none w-full leading-none">
+        <span class="text-xl text-steel font-semibold pb-1">€</span>
+      </div>
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Categoría</label>
+      <div id="expense-category-chips" class="flex gap-2 overflow-x-auto pb-1 mt-2 mb-4 -mx-5 px-5"></div>
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Fecha</label>
+      <input id="expense-date-input" type="date" style="color-scheme: dark;" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm outline-none">
+
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em] mt-4 block">Nota (opcional)</label>
+      <input id="expense-note-input" type="text" placeholder="p. ej. supermercado" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm outline-none">
+
+      <div class="flex gap-3 mt-5">
+        <button onclick="closeAddExpenseModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
+        <button onclick="saveExpense()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BUDGET EDIT MODAL ============ -->
+  <div id="budget-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeBudgetModal()"></div>
+    <div id="budget-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Presupuestos</p>
+      <h3 class="font-bold text-lg mt-1 mb-4">Editar categorías</h3>
+
+      <div id="budget-category-rows" class="space-y-3"></div>
+
+      <button onclick="addBudgetCategoryRow()" class="tap-scale w-full mt-4 py-3 rounded-xl bg-panelraised text-bone font-semibold text-[13px]">+ Añadir categoría</button>
+
+      <div class="flex gap-3 mt-5">
+        <button onclick="closeBudgetModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
+        <button onclick="saveBudgets()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -261,8 +370,6 @@
    ============================================================ */
 const dayNames      = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado']; // idx = getDay()
 const dayLabelsFull  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const dayLabelsShort = ['D','L','M','X','J','V','S'];
-const weekOrder = [1,2,3,4,5,6,0]; // orden de visualización L-D
 
 function getDefaultDietPlan(){
   return {
@@ -360,7 +467,7 @@ function getDefaultSnack(){
 /* ============================================================
    ESTADO Y PERSISTENCIA
    ============================================================ */
-const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), selectedDietDayIdx: null };
+const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null };
 
 function pad(n){ return String(n).padStart(2,'0'); }
 function toISODate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -371,14 +478,39 @@ function loadCompletions(){ return JSON.parse(localStorage.getItem('mealCompleti
 function saveCompletions(c){ localStorage.setItem('mealCompletions', JSON.stringify(c)); }
 function loadWorkoutDays(){ return JSON.parse(localStorage.getItem('workoutDays')||'{}'); }
 function saveWorkoutDays(w){ localStorage.setItem('workoutDays', JSON.stringify(w)); }
-function loadStepsEntries(){ return JSON.parse(localStorage.getItem('stepsEntries')||'{}'); }
-function saveStepsEntries(s){ localStorage.setItem('stepsEntries', JSON.stringify(s)); }
 function loadWeightEntries(){ return JSON.parse(localStorage.getItem('weightEntries')||'[]'); }
 function saveWeightEntries(e){ localStorage.setItem('weightEntries', JSON.stringify(e)); }
 function loadShoppingChecked(){ return JSON.parse(localStorage.getItem('shoppingChecked')||'{}'); }
 function saveShoppingChecked(c){ localStorage.setItem('shoppingChecked', JSON.stringify(c)); }
 function loadDailySnack(){ const s=localStorage.getItem('dailySnack'); return s?JSON.parse(s):getDefaultSnack(); }
 function saveDailySnack(s){ localStorage.setItem('dailySnack', JSON.stringify(s)); }
+function loadFoodLog(){ return JSON.parse(localStorage.getItem('foodLogEntries')||'[]'); }
+function saveFoodLog(e){ localStorage.setItem('foodLogEntries', JSON.stringify(e)); }
+function getFoodLogForDate(dateStr){ return loadFoodLog().filter(e=>e.date===dateStr); }
+function sumFoodLogMacros(dateStr){
+  const totals = {kcal:0,p:0,c:0,f:0};
+  getFoodLogForDate(dateStr).forEach(e=>{ totals.kcal+=e.kcal; totals.p+=e.p; totals.c+=e.c; totals.f+=e.f; });
+  return totals;
+}
+function loadPantryText(){ return localStorage.getItem('pantryIngredients')||''; }
+function savePantryText(t){ localStorage.setItem('pantryIngredients', t); }
+function loadPantryRecipes(){ return JSON.parse(localStorage.getItem('pantryRecipes')||'[]'); }
+function savePantryRecipes(r){ localStorage.setItem('pantryRecipes', JSON.stringify(r)); }
+function getDefaultExpenseCategories(){
+  return [
+    {id:'comida', name:'Comida', emoji:'🍽️', limit:250},
+    {id:'transporte', name:'Transporte', emoji:'🚌', limit:40},
+    {id:'salud', name:'Salud', emoji:'🩺', limit:40},
+    {id:'ocio', name:'Ocio', emoji:'🎮', limit:80},
+    {id:'otros', name:'Otros', emoji:'📦', limit:50}
+  ];
+}
+function loadExpenseCategories(){ const s=localStorage.getItem('expenseCategories'); return s?JSON.parse(s):getDefaultExpenseCategories(); }
+function saveExpenseCategories(c){ localStorage.setItem('expenseCategories', JSON.stringify(c)); }
+function loadExpenses(){ return JSON.parse(localStorage.getItem('expenses')||'[]'); }
+function saveExpenses(e){ localStorage.setItem('expenses', JSON.stringify(e)); }
+function formatEuro(n){ return (Math.round((n+Number.EPSILON)*100)/100).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€'; }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 /* ============================================================
    NAVEGACIÓN
@@ -386,7 +518,7 @@ function saveDailySnack(s){ localStorage.setItem('dailySnack', JSON.stringify(s)
 function showTab(tab){
   state.activeTab = tab;
   localStorage.setItem('activeTab', tab);
-  ['dieta','entreno','peso'].forEach(t=>{
+  ['dieta','entreno','peso','gastos'].forEach(t=>{
     document.getElementById('view-'+t).classList.toggle('hidden-view', t!==tab);
   });
   document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -400,6 +532,7 @@ function showTab(tab){
   if(tab==='dieta') renderDieta();
   if(tab==='entreno') renderEntreno();
   if(tab==='peso') renderPeso();
+  if(tab==='gastos') renderGastos();
 }
 
 /* ============================================================
@@ -442,73 +575,18 @@ function renderMacroBars(consumed){
 
 function renderDieta(){
   const todayIdx = new Date().getDay();
-  if(state.selectedDietDayIdx===null) state.selectedDietDayIdx = todayIdx;
-  const selectedIdx = state.selectedDietDayIdx;
-  const isToday = selectedIdx===todayIdx;
-  const dayName = dayNames[selectedIdx];
-  const plan = loadDietPlan();
-  const dayPlan = plan[dayName];
-  const completions = loadCompletions();
   const todayISO = toISODate(new Date());
-  const snack = loadDailySnack();
+  const completions = loadCompletions();
 
-  document.getElementById('dieta-title').textContent = isToday ? 'Hoy · '+dayLabelsFull[selectedIdx] : dayLabelsFull[selectedIdx];
+  document.getElementById('dieta-title').textContent = 'Hoy · '+dayLabelsFull[todayIdx];
 
-  // chips
-  const chipsWrap = document.getElementById('dieta-day-chips');
-  chipsWrap.innerHTML = weekOrder.map(idx=>{
-    const active = idx===selectedIdx;
-    return `<button class="tap-scale shrink-0 w-10 h-10 rounded-full text-sm font-bold font-mono ${active?'bg-signal text-graphite':'bg-panel text-steel border border-white/[0.06]'}" onclick="selectDietDay(${idx})">${dayLabelsShort[idx]}</button>`;
-  }).join('');
+  // macros de hoy (registro libre de comidas)
+  renderMacroBars(sumFoodLogMacros(todayISO));
 
-  // progreso + macros de hoy (solo relevante para hoy)
-  const gaugeWrap = document.getElementById('dieta-progress-wrap');
-  gaugeWrap.style.display = isToday ? 'block' : 'none';
-  let completedCount = 0;
-  ['comida1','comida2','creatine','snack'].forEach(k=>{ if(completions[todayISO+'_'+k]) completedCount++; });
-  const circumference = 263.9;
-  document.getElementById('gauge-fill').style.strokeDashoffset = circumference*(1-completedCount/4);
-  document.getElementById('dieta-progress-frac').textContent = completedCount+'/4';
-
-  if(isToday){
-    const todayPlan = plan[dayNames[todayIdx]];
-    const consumed = {kcal:0,p:0,c:0,f:0};
-    ['comida1','comida2'].forEach(k=>{
-      if(completions[todayISO+'_'+k]) sumMacros(consumed, parseMacros(todayPlan[k].macros));
-    });
-    if(completions[todayISO+'_snack']) sumMacros(consumed, parseMacros(snack.macros));
-    renderMacroBars(consumed);
-  }
-
-  // meal cards
+  // tarjeta de creatina (fija, todos los días)
+  const creatineDone = !!completions[todayISO+'_creatine'];
   const container = document.getElementById('dieta-meals');
   container.innerHTML = '';
-  ['comida1','comida2'].forEach(mealKey=>{
-    const meal = dayPlan[mealKey];
-    const compKey = todayISO+'_'+mealKey;
-    const done = isToday && !!completions[compKey];
-    const card = document.createElement('div');
-    card.className = `bg-panel border rounded-2xl p-4 ${done?'border-signal/40':'border-white/[0.06]'}`;
-    card.innerHTML = `
-      <div class="flex justify-between items-start mb-2">
-        <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">${mealKey==='comida1'?'Comida 1':'Comida 2'}</span>
-        <button class="tap-scale text-steel text-[13px] font-semibold" onclick="openEditModal('${dayName}','${mealKey}')">Editar</button>
-      </div>
-      <h3 class="font-bold text-[16px] leading-snug ${done?'line-through text-steel':''}">${meal.title}</h3>
-      <ul class="mt-2.5 space-y-1">
-        ${meal.ingredients.map(i=>`<li class="text-[13.5px] text-steel flex gap-1.5"><span class="text-signal">·</span><span>${i}</span></li>`).join('')}
-      </ul>
-      ${meal.method?`<p class="mt-2.5 text-[12.5px] text-bone/80 bg-panelraised rounded-lg p-2.5 leading-relaxed">${meal.method}</p>`:''}
-      <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/[0.06]">
-        <span class="text-[12px] font-mono text-steel">${meal.macros}</span>
-      </div>
-      ${isToday?`<button class="tap-scale w-full mt-3 py-2.5 rounded-xl font-bold text-[14px] ${done?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleMealComplete('${mealKey}')">${done?'✓ Completada':'Marcar como completada'}</button>`:''}
-    `;
-    container.appendChild(card);
-  });
-
-  // tarjeta de creatina (fija, igual todos los días)
-  const creatineDone = isToday && !!completions[todayISO+'_creatine'];
   const creatineCard = document.createElement('div');
   creatineCard.className = `bg-panel border rounded-2xl p-4 ${creatineDone?'border-signal/40':'border-white/[0.06]'}`;
   creatineCard.innerHTML = `
@@ -518,110 +596,20 @@ function renderDieta(){
         <h3 class="font-bold text-[16px] leading-snug mt-1 ${creatineDone?'line-through text-steel':''}">Creatina — 5 g</h3>
         <p class="text-[12.5px] text-steel mt-1">A cualquier hora, disuelta en agua o con la comida.</p>
       </div>
-      ${isToday?`<button class="tap-scale shrink-0 ml-3 w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold ${creatineDone?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleCreatineComplete()">${creatineDone?'✓':''}</button>`:''}
+      <button class="tap-scale shrink-0 ml-3 w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold ${creatineDone?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleCreatineComplete()">${creatineDone?'✓':''}</button>
     </div>
   `;
   container.appendChild(creatineCard);
 
-  // tarjeta del batido (fija, igual todos los días)
-  const snackDone = isToday && !!completions[todayISO+'_snack'];
-  const snackCard = document.createElement('div');
-  snackCard.className = `bg-panel border rounded-2xl p-4 ${snackDone?'border-signal/40':'border-white/[0.06]'}`;
-  snackCard.innerHTML = `
-    <div class="flex justify-between items-start mb-2">
-      <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">Extra diario</span>
-      <button class="tap-scale text-steel text-[13px] font-semibold" onclick="openSnackEditModal()">Editar</button>
-    </div>
-    <h3 class="font-bold text-[16px] leading-snug ${snackDone?'line-through text-steel':''}">${snack.title}</h3>
-    <ul class="mt-2.5 space-y-1">
-      ${snack.ingredients.map(i=>`<li class="text-[13.5px] text-steel flex gap-1.5"><span class="text-signal">·</span><span>${i}</span></li>`).join('')}
-    </ul>
-    ${snack.method?`<p class="mt-2.5 text-[12.5px] text-bone/80 bg-panelraised rounded-lg p-2.5 leading-relaxed">${snack.method}</p>`:''}
-    <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/[0.06]">
-      <span class="text-[12px] font-mono text-steel">${snack.macros}</span>
-    </div>
-    ${isToday?`<button class="tap-scale w-full mt-3 py-2.5 rounded-xl font-bold text-[14px] ${snackDone?'bg-signal text-graphite':'bg-panelraised text-bone'}" onclick="toggleSnackComplete()">${snackDone?'✓ Completado':'Marcar como completado'}</button>`:''}
-  `;
-  container.appendChild(snackCard);
+  renderDietaRecipes();
 }
 
-function selectDietDay(idx){ state.selectedDietDayIdx = idx; renderDieta(); }
-
-function toggleMealComplete(mealKey){
-  const todayISO = toISODate(new Date());
-  const completions = loadCompletions();
-  const key = todayISO+'_'+mealKey;
-  completions[key] = !completions[key];
-  saveCompletions(completions);
-  renderDieta();
-}
 function toggleCreatineComplete(){
   const todayISO = toISODate(new Date());
   const completions = loadCompletions();
   const key = todayISO+'_creatine';
   completions[key] = !completions[key];
   saveCompletions(completions);
-  renderDieta();
-}
-function toggleSnackComplete(){
-  const todayISO = toISODate(new Date());
-  const completions = loadCompletions();
-  const key = todayISO+'_snack';
-  completions[key] = !completions[key];
-  saveCompletions(completions);
-  renderDieta();
-}
-
-let editingContext = null;
-function openEditModal(dayName, mealKey){
-  editingContext = {type:'meal', dayName, mealKey};
-  const plan = loadDietPlan();
-  const meal = plan[dayName][mealKey];
-  document.getElementById('edit-modal-eyebrow').textContent = mealKey==='comida1'?'Comida 1':'Comida 2';
-  document.getElementById('edit-modal-title').textContent = meal.title;
-  document.getElementById('edit-ingredients').value = meal.ingredients.join('\n');
-  document.getElementById('edit-notes').value = meal.method || '';
-  openModalSheet();
-}
-function openSnackEditModal(){
-  editingContext = {type:'snack'};
-  const snack = loadDailySnack();
-  document.getElementById('edit-modal-eyebrow').textContent = 'Extra diario';
-  document.getElementById('edit-modal-title').textContent = snack.title;
-  document.getElementById('edit-ingredients').value = snack.ingredients.join('\n');
-  document.getElementById('edit-notes').value = snack.method || '';
-  openModalSheet();
-}
-function openModalSheet(){
-  const modal = document.getElementById('edit-modal');
-  const sheet = document.getElementById('edit-modal-sheet');
-  modal.classList.remove('hidden-view');
-  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
-}
-function closeEditModal(){
-  const modal = document.getElementById('edit-modal');
-  const sheet = document.getElementById('edit-modal-sheet');
-  sheet.style.transform = 'translateY(100%)';
-  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
-  editingContext = null;
-}
-function saveEdit(){
-  if(!editingContext) return;
-  const ingredients = document.getElementById('edit-ingredients').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const method = document.getElementById('edit-notes').value.trim();
-  if(editingContext.type==='snack'){
-    const snack = loadDailySnack();
-    snack.ingredients = ingredients;
-    snack.method = method;
-    saveDailySnack(snack);
-  } else {
-    const plan = loadDietPlan();
-    const {dayName, mealKey} = editingContext;
-    plan[dayName][mealKey].ingredients = ingredients;
-    plan[dayName][mealKey].method = method;
-    saveDietPlan(plan);
-  }
-  closeEditModal();
   renderDieta();
 }
 
@@ -703,17 +691,6 @@ function countRestDaysInWeek(dateObj, workoutDays){
 
 function renderEntreno(){
   const workoutDays = loadWorkoutDays();
-
-  // pasos de hoy (si han llegado desde Salud)
-  const stepsEntries = loadStepsEntries();
-  const todaySteps = stepsEntries[toISODate(new Date())];
-  const stepsCard = document.getElementById('steps-card');
-  if(todaySteps){
-    stepsCard.classList.remove('hidden');
-    document.getElementById('steps-count').textContent = todaySteps.toLocaleString('es-ES');
-  } else {
-    stepsCard.classList.add('hidden');
-  }
 
   // racha: los días de descanso no la rompen, pero tampoco suman
   let streak = 0;
@@ -867,7 +844,506 @@ function deleteWeightEntry(date){
   saveWeightEntries(entries);
   renderPeso();
 }
-const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','stepsEntries'];
+
+/* ============================================================
+   GASTOS
+   ============================================================ */
+const monthNamesEs = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function monthKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function changeFinanceMonth(delta){
+  state.financeMonth.setMonth(state.financeMonth.getMonth()+delta);
+  renderGastos();
+}
+function renderGastos(){
+  document.getElementById('gastos-month-label').textContent = `${monthNamesEs[state.financeMonth.getMonth()]} ${state.financeMonth.getFullYear()}`;
+
+  const categories = loadExpenseCategories();
+  const expenses = loadExpenses();
+  const mKey = monthKey(state.financeMonth);
+  const monthExpenses = expenses.filter(e=>e.date.startsWith(mKey));
+
+  const spentByCategory = {};
+  categories.forEach(c=>{ spentByCategory[c.id] = 0; });
+  let totalSpent = 0;
+  monthExpenses.forEach(e=>{
+    spentByCategory[e.categoryId] = (spentByCategory[e.categoryId]||0) + e.amount;
+    totalSpent += e.amount;
+  });
+  const totalLimit = categories.reduce((s,c)=>s+c.limit, 0);
+
+  const circumference = 263.9;
+  const pctTotal = totalLimit>0 ? Math.min(1, totalSpent/totalLimit) : (totalSpent>0?1:0);
+  const gaugeFill = document.getElementById('gastos-gauge-fill');
+  gaugeFill.style.strokeDashoffset = circumference*(1-pctTotal);
+  gaugeFill.style.stroke = (totalLimit>0 && totalSpent>totalLimit) ? '#E2574C' : '#F0A431';
+  document.getElementById('gastos-total-spent').textContent = formatEuro(totalSpent);
+  document.getElementById('gastos-total-limit').textContent = formatEuro(totalLimit);
+
+  document.getElementById('gastos-category-bars').innerHTML = categories.map(c=>{
+    const spent = spentByCategory[c.id]||0;
+    const pct = c.limit>0 ? Math.min(100, Math.round((spent/c.limit)*100)) : (spent>0?100:0);
+    const over = c.limit>0 && spent>c.limit;
+    const color = over ? '#E2574C' : '#F0A431';
+    return `<div>
+      <div class="flex justify-between items-baseline mb-1">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.1em] text-steel">${c.emoji} ${escapeHtml(c.name)}</span>
+        <span class="text-[11px] font-mono"><span class="text-bone font-bold">${formatEuro(spent)}</span><span class="text-steeldim"> / ${formatEuro(c.limit)}</span></span>
+      </div>
+      <div class="h-1.5 bg-panelraised rounded-full overflow-hidden">
+        <div class="h-full rounded-full" style="width:${pct}%; background-color:${color}; transition: width .4s ease;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const listEl = document.getElementById('gastos-list');
+  const sorted = monthExpenses.slice().sort((a,b)=> b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+  if(sorted.length===0){
+    listEl.innerHTML = `<p class="text-steel text-sm text-center py-6">Aún no hay gastos este mes</p>`;
+  } else {
+    listEl.innerHTML = sorted.map(e=>{
+      const cat = categories.find(c=>c.id===e.categoryId) || {emoji:'📦', name:'Otros'};
+      const d = new Date(e.date+'T00:00:00');
+      const dateStr = d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+      const noteHtml = e.note ? ' · '+escapeHtml(e.note) : '';
+      return `<div class="relative overflow-hidden rounded-xl">
+        <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
+          <button class="text-white font-semibold text-sm" onclick="deleteExpense('${e.id}')">Eliminar</button>
+        </div>
+        <div class="expense-row bg-panel border border-white/[0.06] flex justify-between items-center p-3.5 relative rounded-xl" style="transform:translateX(0);" data-id="${e.id}">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="text-lg shrink-0">${cat.emoji}</span>
+            <div class="min-w-0">
+              <p class="text-[13.5px] text-bone font-semibold truncate">${escapeHtml(cat.name)}${noteHtml}</p>
+              <p class="text-[11px] text-steel capitalize">${dateStr}</p>
+            </div>
+          </div>
+          <span class="font-mono font-bold text-[15px] shrink-0 ml-2">${formatEuro(e.amount)}</span>
+        </div>
+      </div>`;
+    }).join('');
+    attachSwipeHandlers('.expense-row');
+  }
+}
+
+function openAddExpenseModal(){
+  const categories = loadExpenseCategories();
+  if(!state.selectedExpenseCategoryId || !categories.find(c=>c.id===state.selectedExpenseCategoryId)){
+    state.selectedExpenseCategoryId = categories.length ? categories[0].id : null;
+  }
+  renderExpenseCategoryChips();
+  document.getElementById('expense-amount-input').value = '';
+  document.getElementById('expense-note-input').value = '';
+  const dateInput = document.getElementById('expense-date-input');
+  dateInput.max = toISODate(new Date());
+  dateInput.value = toISODate(new Date());
+  const modal = document.getElementById('expense-modal');
+  const sheet = document.getElementById('expense-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeAddExpenseModal(){
+  const modal = document.getElementById('expense-modal');
+  const sheet = document.getElementById('expense-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+function renderExpenseCategoryChips(){
+  const categories = loadExpenseCategories();
+  document.getElementById('expense-category-chips').innerHTML = categories.map(c=>{
+    const active = c.id===state.selectedExpenseCategoryId;
+    return `<button class="tap-scale shrink-0 px-3.5 h-10 rounded-full text-[13px] font-semibold whitespace-nowrap ${active?'bg-signal text-graphite':'bg-panelraised text-steel border border-white/[0.06]'}" onclick="selectExpenseCategory('${c.id}')">${c.emoji} ${escapeHtml(c.name)}</button>`;
+  }).join('');
+}
+function selectExpenseCategory(id){
+  state.selectedExpenseCategoryId = id;
+  renderExpenseCategoryChips();
+}
+function saveExpense(){
+  const raw = document.getElementById('expense-amount-input').value.replace(',', '.');
+  const amount = parseFloat(raw);
+  if(isNaN(amount) || amount<=0) return;
+  if(!state.selectedExpenseCategoryId) return;
+  const date = document.getElementById('expense-date-input').value || toISODate(new Date());
+  const note = document.getElementById('expense-note-input').value.trim();
+  const expenses = loadExpenses();
+  expenses.push({ id: 'e'+Date.now(), date, amount, categoryId: state.selectedExpenseCategoryId, note });
+  saveExpenses(expenses);
+  closeAddExpenseModal();
+  renderGastos();
+}
+function deleteExpense(id){
+  const expenses = loadExpenses().filter(e=>e.id!==id);
+  saveExpenses(expenses);
+  renderGastos();
+}
+
+function openBudgetModal(){
+  state.editingCategories = loadExpenseCategories().map(c=>({...c}));
+  renderBudgetRows();
+  const modal = document.getElementById('budget-modal');
+  const sheet = document.getElementById('budget-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeBudgetModal(){
+  const modal = document.getElementById('budget-modal');
+  const sheet = document.getElementById('budget-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+  state.editingCategories = null;
+}
+function renderBudgetRows(){
+  document.getElementById('budget-category-rows').innerHTML = state.editingCategories.map(c=>`
+    <div class="flex items-center gap-2 bg-panelraised rounded-xl p-3">
+      <span class="text-lg shrink-0">${c.emoji}</span>
+      <input type="text" value="${escapeHtml(c.name)}" class="flex-1 min-w-0 bg-transparent text-bone text-sm font-semibold outline-none" oninput="updateBudgetField('${c.id}','name',this.value)">
+      <input type="text" inputmode="decimal" value="${c.limit}" class="w-16 bg-panel rounded-lg px-2 py-1.5 text-bone text-sm font-mono text-right outline-none" oninput="updateBudgetField('${c.id}','limit',this.value)">
+      <span class="text-steel text-xs shrink-0">€</span>
+      <button onclick="removeBudgetCategoryRow('${c.id}')" class="text-danger text-lg px-1 shrink-0">×</button>
+    </div>
+  `).join('');
+}
+function updateBudgetField(id, field, value){
+  const cat = state.editingCategories.find(c=>c.id===id);
+  if(!cat) return;
+  if(field==='name') cat.name = value;
+  if(field==='limit'){ const v = parseFloat(value.replace(',','.')); cat.limit = isNaN(v) ? 0 : v; }
+}
+function addBudgetCategoryRow(){
+  state.editingCategories.push({id:'cat'+Date.now(), name:'Nueva categoría', emoji:'📦', limit:0});
+  renderBudgetRows();
+}
+function removeBudgetCategoryRow(id){
+  state.editingCategories = state.editingCategories.filter(c=>c.id!==id);
+  renderBudgetRows();
+}
+function saveBudgets(){
+  const cleaned = state.editingCategories.filter(c=>c.name && c.name.trim().length>0).map(c=>({...c, name:c.name.trim()}));
+  saveExpenseCategories(cleaned);
+  closeBudgetModal();
+  renderGastos();
+}
+
+/* ============================================================
+   REGISTRO LIBRE DE COMIDA (chat + IA)
+   ============================================================ */
+function openFoodChatModal(){
+  renderFoodChatMessages();
+  const modal = document.getElementById('food-chat-modal');
+  const sheet = document.getElementById('food-chat-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+  setTimeout(()=>{
+    document.getElementById('food-chat-input').focus();
+    scrollFoodChatToBottom();
+  }, 300);
+}
+function closeFoodChatModal(){
+  const modal = document.getElementById('food-chat-modal');
+  const sheet = document.getElementById('food-chat-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+function autoGrowTextarea(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 112) + 'px';
+}
+function handleFoodChatKeydown(e){
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendFoodLogMessage();
+  }
+}
+function scrollFoodChatToBottom(){
+  const wrap = document.getElementById('food-chat-messages');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function renderFoodChatMessages(){
+  const todayISO = toISODate(new Date());
+  const entries = getFoodLogForDate(todayISO).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const wrap = document.getElementById('food-chat-messages');
+  if(entries.length===0){
+    wrap.innerHTML = `<p class="text-steel text-[13px] text-center py-8 leading-relaxed">Cuéntame qué has comido y calculo las calorías y macros aproximados.<br>Se suman a tu progreso de hoy.</p>`;
+    return;
+  }
+  wrap.innerHTML = entries.map(e=>`
+    <div class="relative overflow-hidden rounded-2xl ml-8">
+      <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4 rounded-2xl">
+        <button class="text-white font-semibold text-sm" onclick="deleteFoodLogEntry('${e.id}')">Eliminar</button>
+      </div>
+      <div class="food-log-row bg-panelraised rounded-2xl p-3.5 relative" style="transform:translateX(0);">
+        <p class="text-[13.5px] text-bone leading-snug">${escapeHtml(e.text)}</p>
+        <p class="text-[11.5px] font-mono text-signal mt-2">≈${Math.round(e.kcal)} kcal · P ${Math.round(e.p)}g · C ${Math.round(e.c)}g · G ${Math.round(e.f)}g</p>
+      </div>
+    </div>
+  `).join('');
+  attachSwipeHandlers('.food-log-row');
+  scrollFoodChatToBottom();
+}
+function deleteFoodLogEntry(id){
+  const entries = loadFoodLog().filter(e=>e.id!==id);
+  saveFoodLog(entries);
+  renderFoodChatMessages();
+  if(state.activeTab==='dieta') renderDieta();
+}
+async function sendFoodLogMessage(){
+  const input = document.getElementById('food-chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const sendBtn = document.getElementById('food-chat-send-btn');
+  input.value = '';
+  autoGrowTextarea(input);
+  input.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = '0.5';
+
+  const wrap = document.getElementById('food-chat-messages');
+  const emptyMsg = wrap.querySelector('p.text-center');
+  if(emptyMsg) emptyMsg.remove();
+  const loadingId = 'fc-loading-'+Date.now();
+  wrap.insertAdjacentHTML('beforeend', `<div id="${loadingId}" class="bg-panelraised rounded-2xl p-3.5 ml-8"><p class="text-steel text-[13px]">Calculando…</p></div>`);
+  scrollFoodChatToBottom();
+
+  try{
+    const macros = await estimateMacrosFromText(text);
+    document.getElementById(loadingId)?.remove();
+    const entries = loadFoodLog();
+    entries.push({
+      id: 'f'+Date.now(),
+      date: toISODate(new Date()),
+      text,
+      kcal: macros.kcal, p: macros.protein_g, c: macros.carbs_g, f: macros.fat_g,
+      ts: Date.now()
+    });
+    saveFoodLog(entries);
+    renderFoodChatMessages();
+    if(state.activeTab==='dieta') renderDieta();
+  } catch(err){
+    document.getElementById(loadingId)?.remove();
+    wrap.insertAdjacentHTML('beforeend', `<div class="bg-panelraised rounded-2xl p-3.5 ml-8"><p class="text-danger text-[13px]">No he podido calcularlo. Inténtalo de nuevo.</p></div>`);
+    scrollFoodChatToBottom();
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+    input.focus();
+  }
+}
+async function estimateMacrosFromText(text){
+  const prompt = `Estima el valor nutricional total de esta comida tal y como está descrita (respeta los pesos indicados exactamente como se dan, sean en crudo o cocinados, según lo que diga el texto). Responde ÚNICAMENTE con un objeto JSON, sin texto adicional, sin markdown ni backticks, con exactamente estas claves numéricas: kcal, protein_g, carbs_g, fat_g. Comida: "${text.replace(/"/g,"'")}"`;
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if(!response.ok) throw new Error('API error '+response.status);
+  const data = await response.json();
+  const textBlock = (data.content||[]).find(b=>b.type==='text');
+  if(!textBlock) throw new Error('Respuesta vacía');
+  const clean = textBlock.text.replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(clean);
+  const kcal = Number(parsed.kcal), p = Number(parsed.protein_g), c = Number(parsed.carbs_g), f = Number(parsed.fat_g);
+  if([kcal,p,c,f].some(v=>isNaN(v))) throw new Error('Datos inválidos');
+  return {kcal, protein_g:p, carbs_g:c, fat_g:f};
+}
+
+/* ============================================================
+   ESCANEAR TICKET DE LA COMPRA (IA con imagen)
+   ============================================================ */
+function fileToNormalizedBase64Jpeg(file){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const maxDim = 1600;
+      let {width, height} = img;
+      if(width>maxDim || height>maxDim){
+        const scale = maxDim/Math.max(width, height);
+        width = Math.round(width*scale);
+        height = Math.round(height*scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('No se pudo procesar la imagen')); };
+    img.src = url;
+  });
+}
+async function handleReceiptUpload(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const statusEl = document.getElementById('receipt-status');
+  statusEl.classList.remove('hidden');
+  statusEl.className = 'text-[11px] text-steel mt-1.5';
+  statusEl.textContent = 'Leyendo el ticket…';
+  try{
+    const base64 = await fileToNormalizedBase64Jpeg(file);
+    const items = await extractReceiptItems(base64);
+    const textarea = document.getElementById('pantry-input');
+    const existing = textarea.value.trim();
+    textarea.value = existing ? existing+'\n'+items.join('\n') : items.join('\n');
+    savePantryText(textarea.value);
+    statusEl.textContent = `Añadidos ${items.length} productos del ticket. Revisa la lista antes de generar recetas.`;
+  } catch(err){
+    statusEl.className = 'text-[11px] text-danger mt-1.5';
+    statusEl.textContent = 'No he podido leer el ticket. Prueba con otra foto o añade los ingredientes a mano.';
+  }
+}
+async function extractReceiptItems(base64Data){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64Data } },
+          { type: "text", text: "Este es un ticket de la compra del supermercado. Extrae solo los productos de alimentación (ignora bolsas, descuentos, impuestos, totales y datos de la tienda). Responde ÚNICAMENTE con un array JSON de strings, sin texto adicional, sin markdown ni backticks, cada string con formato \"Producto: cantidad\" (usa la cantidad o peso del ticket si aparece, o solo el nombre del producto si no hay cantidad clara)." }
+        ]
+      }]
+    })
+  });
+  if(!response.ok) throw new Error('API error '+response.status);
+  const data = await response.json();
+  const textBlock = (data.content||[]).find(b=>b.type==='text');
+  if(!textBlock) throw new Error('Respuesta vacía');
+  const clean = textBlock.text.replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(clean);
+  if(!Array.isArray(parsed) || parsed.length===0) throw new Error('No se detectaron productos');
+  return parsed.map(String);
+}
+
+/* ============================================================
+   RECETAS SEGÚN LA DESPENSA (IA)
+   ============================================================ */
+function openPantryModal(){
+  document.getElementById('pantry-input').value = loadPantryText();
+  renderPantryRecipes();
+  const modal = document.getElementById('pantry-modal');
+  const sheet = document.getElementById('pantry-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closePantryModal(){
+  const modal = document.getElementById('pantry-modal');
+  const sheet = document.getElementById('pantry-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+function buildRecipeCardHtml(r, idx){
+  return `
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-4">
+      <span class="text-[11px] font-bold text-signal uppercase tracking-[0.12em]">Receta sugerida</span>
+      <h3 class="font-bold text-[16px] leading-snug mt-1">${escapeHtml(r.title)}</h3>
+      <ul class="mt-2.5 space-y-1">
+        ${r.ingredients.map(i=>`<li class="text-[13.5px] text-steel flex gap-1.5"><span class="text-signal">·</span><span>${escapeHtml(i)}</span></li>`).join('')}
+      </ul>
+      ${r.method?`<p class="mt-2.5 text-[12.5px] text-bone/80 bg-panelraised rounded-lg p-2.5 leading-relaxed">${escapeHtml(r.method)}</p>`:''}
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/[0.06]">
+        <span class="text-[12px] font-mono text-steel">${escapeHtml(r.macros)}</span>
+      </div>
+      <button onclick="markRecipeEaten(${idx})" class="tap-scale w-full mt-3 py-2.5 rounded-xl bg-panelraised text-bone font-semibold text-[13px]">✓ Marcar como comido</button>
+    </div>
+  `;
+}
+function renderPantryRecipes(){
+  const recipes = loadPantryRecipes();
+  const html = recipes.map((r,idx)=>buildRecipeCardHtml(r,idx)).join('');
+  const modalWrap = document.getElementById('pantry-recipes');
+  if(modalWrap) modalWrap.innerHTML = html;
+  renderDietaRecipes();
+}
+function renderDietaRecipes(){
+  const wrap = document.getElementById('dieta-recipes-list');
+  if(!wrap) return;
+  const recipes = loadPantryRecipes();
+  if(recipes.length===0){
+    wrap.innerHTML = `<div class="bg-panel border border-white/[0.06] rounded-2xl p-5 text-center">
+      <p class="text-steel text-[13px] leading-relaxed mb-3">Aún no tienes recetas. Sube el ticket de la compra o indica qué tienes en casa.</p>
+      <button onclick="openPantryModal()" class="tap-scale px-5 py-2.5 rounded-xl bg-signal text-graphite font-bold text-[13px]">🥕 Generar recetas</button>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = recipes.map((r,idx)=>buildRecipeCardHtml(r,idx)).join('');
+}
+function markRecipeEaten(idx){
+  const recipes = loadPantryRecipes();
+  const r = recipes[idx];
+  if(!r) return;
+  const m = parseMacros(r.macros);
+  const entries = loadFoodLog();
+  entries.push({
+    id: 'f'+Date.now(),
+    date: toISODate(new Date()),
+    text: r.title,
+    kcal: m.kcal, p: m.p, c: m.c, f: m.f,
+    ts: Date.now()
+  });
+  saveFoodLog(entries);
+  if(state.activeTab==='dieta') renderDieta();
+}
+async function generatePantryRecipes(){
+  const input = document.getElementById('pantry-input');
+  const text = input.value.trim();
+  if(!text) return;
+  savePantryText(text);
+  const btn = document.getElementById('pantry-generate-btn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Generando…';
+  btn.style.opacity = '0.6';
+  const wrap = document.getElementById('pantry-recipes');
+  wrap.innerHTML = `<p class="text-steel text-sm text-center py-6">Pensando en recetas…</p>`;
+  try{
+    const recipes = await fetchPantryRecipes(text);
+    savePantryRecipes(recipes);
+    renderPantryRecipes();
+  } catch(err){
+    wrap.innerHTML = `<p class="text-danger text-sm text-center py-6">No he podido generar recetas. Inténtalo de nuevo.</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+    btn.style.opacity = '1';
+  }
+}
+async function fetchPantryRecipes(pantryText){
+  const prompt = `Con estos ingredientes que tengo en casa: "${pantryText.replace(/"/g,"'")}", sugiere 3 recetas sencillas y equilibradas, altas en proteína, preparadas al air fryer o a la sartén, sin pasos complicados. Puedes asumir que también tengo básicos de despensa (aceite de oliva, sal, especias, ajo). Responde ÚNICAMENTE con un array JSON de 3 objetos, sin texto adicional, sin markdown ni backticks, cada uno con exactamente estas claves: "title" (string), "ingredients" (array de strings, cada uno con formato "Ingrediente: cantidad"), "method" (string breve, empezando con 🔥 si usa air fryer o sartén), "macros" (string con el formato exacto "≈XXXX kcal · P Xg · C Xg · G Xg").`;
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if(!response.ok) throw new Error('API error '+response.status);
+  const data = await response.json();
+  const textBlock = (data.content||[]).find(b=>b.type==='text');
+  if(!textBlock) throw new Error('Respuesta vacía');
+  const clean = textBlock.text.replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(clean);
+  if(!Array.isArray(parsed)) throw new Error('Formato inválido');
+  return parsed.map(r=>({
+    title: String(r.title||'Receta'),
+    ingredients: Array.isArray(r.ingredients) ? r.ingredients.map(String) : [],
+    method: String(r.method||''),
+    macros: String(r.macros||'')
+  }));
+}
+
+const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','expenseCategories','expenses','foodLogEntries','pantryIngredients','pantryRecipes'];
 function exportData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -906,7 +1382,7 @@ function getAllTrackedDates(){
   const dates = new Set();
   loadWeightEntries().forEach(e=>dates.add(e.date));
   Object.keys(loadWorkoutDays()).forEach(d=>dates.add(d));
-  Object.keys(loadStepsEntries()).forEach(d=>dates.add(d));
+  loadFoodLog().forEach(e=>dates.add(e.date));
   const completions = loadCompletions();
   Object.keys(completions).forEach(k=>{
     if(completions[k]) dates.add(k.substring(0,10));
@@ -923,6 +1399,7 @@ function getMacrosForDate(dateStr){
     if(completions[dateStr+'_'+k]) sumMacros(totals, parseMacros(dayPlan[k].macros));
   });
   if(completions[dateStr+'_snack']) sumMacros(totals, parseMacros(snack.macros));
+  sumMacros(totals, sumFoodLogMacros(dateStr));
   return totals;
 }
 function exportExcel(){
@@ -931,19 +1408,17 @@ function exportExcel(){
   const weightEntries = loadWeightEntries();
   const workoutDays = loadWorkoutDays();
   const completions = loadCompletions();
-  const stepsEntries = loadStepsEntries();
-  const rows = [['Fecha','Peso (kg)','Pasos','Entrenamiento','Creatina','Calorías','Proteína (g)','Carbohidratos (g)','Grasas (g)']];
+  const rows = [['Fecha','Peso (kg)','Entrenamiento','Creatina','Calorías','Proteína (g)','Carbohidratos (g)','Grasas (g)']];
   dates.forEach(date=>{
     const w = weightEntries.find(e=>e.date===date);
     const trainState = workoutDays[date];
     const trainLabel = trainState==='trained' ? 'Entrenado' : trainState==='rest' ? 'Descanso' : '';
     const creatineLabel = completions[date+'_creatine'] ? 'Sí' : '';
-    const stepsVal = stepsEntries[date] || '';
     const m = getMacrosForDate(date);
-    rows.push([date, w?w.weight:'', stepsVal, trainLabel, creatineLabel, m.kcal||'', m.p||'', m.c||'', m.f||'']);
+    rows.push([date, w?w.weight:'', trainLabel, creatineLabel, m.kcal||'', m.p||'', m.c||'', m.f||'']);
   });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:10},{wch:9},{wch:13},{wch:10},{wch:10},{wch:12},{wch:16},{wch:10}];
+  ws['!cols'] = [{wch:12},{wch:10},{wch:13},{wch:10},{wch:10},{wch:12},{wch:16},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Registro');
   const arrayBuffer = XLSX.write(wb, {type:'array', bookType:'xlsx'});
@@ -960,8 +1435,8 @@ function exportExcel(){
     URL.revokeObjectURL(url);
   }
 }
-function attachSwipeHandlers(){
-  document.querySelectorAll('.weight-row').forEach(row=>{
+function attachSwipeHandlers(selector){
+  document.querySelectorAll(selector || '.weight-row').forEach(row=>{
     let startX=0, dx=0, dragging=false;
     row.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; dragging=true; row.style.transition='none'; }, {passive:true});
     row.addEventListener('touchmove', e=>{
@@ -979,38 +1454,8 @@ function attachSwipeHandlers(){
 }
 
 /* ============================================================
-   PUENTE CON SALUD (vía Atajos + parámetro en la URL)
-   ============================================================ */
-function handleURLParams(){
-  const params = new URLSearchParams(window.location.search);
-  let touched = false;
-  if(params.has('peso')){
-    const val = parseFloat(params.get('peso').replace(',','.'));
-    if(!isNaN(val) && val>0){
-      const entries = loadWeightEntries();
-      const todayISO = toISODate(new Date());
-      const idx = entries.findIndex(e=>e.date===todayISO);
-      if(idx>=0) entries[idx].weight = val; else entries.push({date:todayISO, weight:val});
-      saveWeightEntries(entries);
-    }
-    touched = true;
-  }
-  if(params.has('pasos')){
-    const val = parseInt(params.get('pasos'));
-    if(!isNaN(val) && val>=0){
-      const steps = loadStepsEntries();
-      steps[toISODate(new Date())] = val;
-      saveStepsEntries(steps);
-    }
-    touched = true;
-  }
-  if(touched) window.history.replaceState({}, document.title, window.location.pathname);
-}
-
-/* ============================================================
    INIT
    ============================================================ */
-handleURLParams();
 showTab(state.activeTab);
 </script>
 </body>
