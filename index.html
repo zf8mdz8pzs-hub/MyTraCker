@@ -75,21 +75,34 @@
         <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Plan de alimentación</p>
         <h1 id="dieta-title" class="text-[26px] font-bold mt-1 leading-tight">Hoy</h1>
       </div>
-      <div class="flex items-center gap-2 mt-1 shrink-0">
-        <button onclick="openFoodChatModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">💬</button>
-        <button onclick="openPantryModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">🥕</button>
-        <button onclick="openShoppingModal()" class="tap-scale w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px]">🛒</button>
-      </div>
+      <button onclick="openShoppingModal()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[19px] mt-1">🛒</button>
     </header>
 
-    <div id="dieta-progress-wrap" class="bg-panel border border-white/[0.06] rounded-2xl p-4 mb-5">
-      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Macros de hoy</p>
-      <div id="dieta-macro-bars" class="mt-3 space-y-2.5"></div>
+    <div id="dieta-progress-wrap" class="bg-panel border border-white/[0.06] rounded-2xl p-5 mb-5">
+      <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em] text-center mb-4">Macros de hoy</p>
+      <div id="dieta-macro-rings" class="flex flex-col items-center"></div>
     </div>
 
     <div id="dieta-meals" class="space-y-4"></div>
 
-    <h3 class="font-semibold text-[15px] mt-6 mb-3">Recetas para ti</h3>
+    <div class="bg-panel border border-white/[0.06] rounded-2xl p-4 mt-4">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">¿Qué has comido?</p>
+        <button onclick="openApiKeyModal()" class="tap-scale w-8 h-8 rounded-full bg-panelraised flex items-center justify-center text-steel text-[13px]">🔑</button>
+      </div>
+      <div id="food-chat-messages" class="space-y-3 max-h-[280px] overflow-y-auto"></div>
+      <div class="flex items-end gap-2 mt-3">
+        <textarea id="food-chat-input" rows="1" placeholder="p. ej. 300g de pechuga de pollo con 300g de arroz cocido"
+          class="flex-1 bg-panelraised rounded-2xl px-4 py-3 text-bone text-[14px] outline-none resize-none max-h-28" oninput="autoGrowTextarea(this)" onkeydown="handleFoodChatKeydown(event)"></textarea>
+        <button id="food-chat-send-btn" onclick="sendFoodLogMessage()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-signal text-graphite flex items-center justify-center font-bold text-lg">↑</button>
+      </div>
+      <p class="text-[10px] text-steel mt-2 leading-relaxed">Estimación automática — puede variar según ingredientes y preparación exacta.</p>
+    </div>
+
+    <div class="flex items-center justify-between mt-6 mb-3">
+      <h3 class="font-semibold text-[15px]">Recetas para ti</h3>
+      <button onclick="openPantryModal()" class="tap-scale w-9 h-9 rounded-full bg-panel border border-white/[0.06] flex items-center justify-center text-[15px]">🥕</button>
+    </div>
     <div id="dieta-recipes-list" class="space-y-4"></div>
   </section>
 
@@ -132,6 +145,15 @@
     </div>
 
     <p class="text-[12px] text-steel mt-3 leading-relaxed">Toca un día para marcarlo como entrenado. Vuelve a tocarlo para marcarlo como descanso — no rompe la racha, hasta 3 por semana. Un tercer toque lo deja vacío.</p>
+
+    <h3 class="font-semibold text-[15px] mt-7 mb-3">Registro de fuerza</h3>
+    <div class="relative bg-panelraised rounded-xl p-1 mb-4 flex">
+      <div id="muscle-tab-thumb" class="absolute top-1 bottom-1 left-1 rounded-lg bg-signal" style="width: calc(50% - 4px); transition: transform .25s cubic-bezier(.32,.72,0,1);"></div>
+      <button id="muscle-tab-upper" onclick="selectMuscleTab('upper')" class="tap-scale relative z-10 flex-1 py-2.5 rounded-lg font-semibold text-[13px]">Upper body</button>
+      <button id="muscle-tab-lower" onclick="selectMuscleTab('lower')" class="tap-scale relative z-10 flex-1 py-2.5 rounded-lg font-semibold text-[13px]">Lower body</button>
+    </div>
+    <div id="exercise-list" class="space-y-3"></div>
+    <button onclick="openAddExerciseModal()" class="tap-scale w-full mt-3 mb-2 py-3 rounded-xl bg-panelraised text-bone font-semibold text-[13px]">+ Añadir ejercicio</button>
   </section>
 
   <!-- ============ PESO ============ -->
@@ -160,7 +182,7 @@
     </div>
 
     <h3 class="font-semibold text-[15px] mb-3">Historial reciente</h3>
-    <div id="weight-history" class="space-y-2"></div>
+    <div id="weight-history" class="bg-panel border border-white/[0.06] rounded-2xl divide-y divide-white/[0.06] overflow-hidden"></div>
 
     <div class="bg-panel border border-white/[0.06] rounded-2xl p-4 mt-6 mb-6">
       <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em] mb-2">Copia de seguridad</p>
@@ -214,7 +236,7 @@
     <button onclick="openAddExpenseModal()" class="tap-scale w-full mb-6 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">+ Añadir gasto</button>
 
     <h3 class="font-semibold text-[15px] mb-3">Movimientos del mes</h3>
-    <div id="gastos-list" class="space-y-2"></div>
+    <div id="gastos-list" class="bg-panel border border-white/[0.06] rounded-2xl divide-y divide-white/[0.06] overflow-hidden"></div>
   </section>
 
   <!-- ============ BOTTOM NAV ============ -->
@@ -262,41 +284,18 @@
     </div>
   </div>
 
-  <!-- ============ FOOD LOG CHAT MODAL ============ -->
-  <div id="food-chat-modal" class="fixed inset-0 z-50 hidden-view">
-    <div class="absolute inset-0 bg-black/65" onclick="closeFoodChatModal()"></div>
-    <div id="food-chat-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] flex flex-col" style="height: 82vh; transform: translateY(100%);">
-      <div class="px-5 pt-5 shrink-0">
-        <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-4"></div>
-        <div class="flex items-center justify-between mb-1">
-          <div>
-            <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Registro libre</p>
-            <h3 class="font-bold text-lg mt-0.5">¿Qué has comido?</h3>
-          </div>
-          <button onclick="closeFoodChatModal()" class="tap-scale w-9 h-9 rounded-full bg-panelraised flex items-center justify-center text-steel text-lg">✕</button>
-        </div>
-      </div>
-
-      <div id="food-chat-messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
-
-      <div class="shrink-0 px-5 pt-3 border-t border-white/[0.06]" style="padding-bottom: calc(14px + env(safe-area-inset-bottom));">
-        <div class="flex items-end gap-2">
-          <textarea id="food-chat-input" rows="1" placeholder="p. ej. 300g de pechuga de pollo con 300g de arroz cocido y 200g de brócoli"
-            class="flex-1 bg-panelraised rounded-2xl px-4 py-3 text-bone text-[14px] outline-none resize-none max-h-28" oninput="autoGrowTextarea(this)" onkeydown="handleFoodChatKeydown(event)"></textarea>
-          <button id="food-chat-send-btn" onclick="sendFoodLogMessage()" class="tap-scale shrink-0 w-11 h-11 rounded-full bg-signal text-graphite flex items-center justify-center font-bold text-lg">↑</button>
-        </div>
-        <p class="text-[10.5px] text-steel mt-2 leading-relaxed">Estimación automática — puede variar según ingredientes y preparación exacta.</p>
-      </div>
-    </div>
-  </div>
-
   <!-- ============ PANTRY / RECIPE MODAL ============ -->
   <div id="pantry-modal" class="fixed inset-0 z-50 hidden-view">
     <div class="absolute inset-0 bg-black/65" onclick="closePantryModal()"></div>
     <div id="pantry-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
       <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
-      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Despensa</p>
-      <h3 class="font-bold text-lg mt-1 mb-4">Recetas con lo que has comprado</h3>
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Despensa</p>
+          <h3 class="font-bold text-lg mt-1">Recetas con lo que has comprado</h3>
+        </div>
+        <button onclick="openApiKeyModal()" class="tap-scale shrink-0 w-9 h-9 rounded-full bg-panelraised flex items-center justify-center text-steel text-[15px]">🔑</button>
+      </div>
 
       <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">¿Qué tienes en casa?</label>
       <textarea id="pantry-input" rows="3" placeholder="p. ej. pechuga de pollo, arroz, brócoli, huevos, aguacate"
@@ -310,6 +309,85 @@
       <p class="text-[10.5px] text-steel mt-2 leading-relaxed">Estimación automática de macros — puede variar según ingredientes y preparación exacta.</p>
 
       <div id="pantry-recipes" class="mt-6 space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- ============ API KEY SETTINGS MODAL ============ -->
+  <div id="apikey-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeApiKeyModal()"></div>
+    <div id="apikey-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5 max-h-[86vh] overflow-y-auto" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Ajustes</p>
+      <h3 class="font-bold text-lg mt-1 mb-3">Clave de API de Anthropic</h3>
+      <p class="text-[12.5px] text-steel leading-relaxed mb-3">Las funciones con IA (registro de comidas, recetas y escaneo de tickets) necesitan tu propia clave de API para funcionar fuera de Claude. Se guarda solo en este dispositivo y solo se usa para llamar directamente a la API de Anthropic desde el navegador.</p>
+      <input id="apikey-input" type="password" placeholder="sk-ant-..." autocapitalize="off" autocorrect="off" spellcheck="false" class="w-full bg-panelraised rounded-xl p-3 text-bone text-sm outline-none font-mono">
+      <div class="flex gap-3 mt-4">
+        <button onclick="closeApiKeyModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
+        <button onclick="saveApiKeyFromInput()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD EXERCISE MODAL ============ -->
+  <div id="add-exercise-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeAddExerciseModal()"></div>
+    <div id="add-exercise-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] p-5" style="padding-bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateY(100%);">
+      <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-5"></div>
+      <p id="add-exercise-eyebrow" class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Upper body</p>
+      <h3 class="font-bold text-lg mt-1 mb-4">Nuevo ejercicio</h3>
+      <label class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Nombre</label>
+      <input id="add-exercise-name" type="text" placeholder="p. ej. Press banca" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-sm outline-none">
+      <div class="flex gap-3 mt-5">
+        <button onclick="closeAddExerciseModal()" class="tap-scale flex-1 py-3.5 rounded-xl bg-panelraised text-bone font-semibold text-[15px]">Cancelar</button>
+        <button onclick="saveNewExercise()" class="tap-scale flex-1 py-3.5 rounded-xl bg-signal text-graphite font-bold text-[15px]">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EXERCISE DETAIL MODAL ============ -->
+  <div id="exercise-detail-modal" class="fixed inset-0 z-50 hidden-view">
+    <div class="absolute inset-0 bg-black/65" onclick="closeExerciseDetailModal()"></div>
+    <div id="exercise-detail-modal-sheet" class="modal-sheet absolute bottom-0 left-0 right-0 bg-panel rounded-t-[28px] flex flex-col" style="height: 88vh; transform: translateY(100%);">
+      <div class="px-5 pt-5 pb-3 shrink-0 border-b border-white/[0.06]">
+        <div class="w-9 h-1 bg-panelraised rounded-full mx-auto mb-4"></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p id="exercise-detail-eyebrow" class="text-[11px] font-semibold text-signal uppercase tracking-[0.14em]">Upper body</p>
+            <h3 id="exercise-detail-title" class="font-bold text-lg mt-0.5">Ejercicio</h3>
+          </div>
+          <button onclick="closeExerciseDetailModal()" class="tap-scale w-9 h-9 rounded-full bg-panelraised flex items-center justify-center text-steel text-lg">✕</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-5 py-4">
+        <div class="bg-panelraised rounded-2xl p-3">
+          <div class="flex justify-between items-baseline mb-2">
+            <span class="text-[11px] font-semibold text-steel uppercase tracking-[0.1em]">Progreso — peso máximo</span>
+            <span id="exercise-detail-pr" class="text-[12px] font-mono text-signal font-bold"></span>
+          </div>
+          <div id="exercise-chart-wrap"></div>
+        </div>
+
+        <div class="mt-5">
+          <div class="flex items-end gap-2">
+            <div class="flex-1">
+              <label class="text-[10.5px] font-semibold text-steel uppercase tracking-[0.1em]">Peso (kg)</label>
+              <input id="exercise-weight-input" type="number" inputmode="decimal" step="0.5" placeholder="0" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-[15px] font-mono outline-none">
+            </div>
+            <div class="flex-1">
+              <label class="text-[10.5px] font-semibold text-steel uppercase tracking-[0.1em]">Repeticiones</label>
+              <input id="exercise-reps-input" type="number" inputmode="numeric" placeholder="0" class="w-full bg-panelraised rounded-xl p-3 mt-1.5 text-bone text-[15px] font-mono outline-none">
+            </div>
+            <button onclick="addExerciseSet()" class="tap-scale shrink-0 h-[46px] px-4 rounded-xl bg-signal text-graphite font-bold text-[14px]">+ Serie</button>
+          </div>
+          <p id="exercise-today-count" class="text-[11.5px] text-steel mt-2"></p>
+        </div>
+
+        <h4 class="font-semibold text-[13.5px] mt-6 mb-2.5 text-steel uppercase tracking-[0.08em]">Historial</h4>
+        <div id="exercise-history-list" class="bg-panel border border-white/[0.06] rounded-2xl divide-y divide-white/[0.06] overflow-hidden"></div>
+
+        <button onclick="deleteExercise()" class="tap-scale w-full mt-6 py-3 rounded-xl bg-panelraised text-danger font-semibold text-[13px]">Eliminar ejercicio</button>
+      </div>
     </div>
   </div>
 
@@ -467,7 +545,7 @@ function getDefaultSnack(){
 /* ============================================================
    ESTADO Y PERSISTENCIA
    ============================================================ */
-const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null };
+const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null, muscleTab: 'upper', currentExerciseId: null };
 
 function pad(n){ return String(n).padStart(2,'0'); }
 function toISODate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -478,6 +556,10 @@ function loadCompletions(){ return JSON.parse(localStorage.getItem('mealCompleti
 function saveCompletions(c){ localStorage.setItem('mealCompletions', JSON.stringify(c)); }
 function loadWorkoutDays(){ return JSON.parse(localStorage.getItem('workoutDays')||'{}'); }
 function saveWorkoutDays(w){ localStorage.setItem('workoutDays', JSON.stringify(w)); }
+function loadExercises(){ return JSON.parse(localStorage.getItem('exercises')||'[]'); }
+function saveExercises(e){ localStorage.setItem('exercises', JSON.stringify(e)); }
+function loadExerciseSets(){ return JSON.parse(localStorage.getItem('exerciseSets')||'[]'); }
+function saveExerciseSets(s){ localStorage.setItem('exerciseSets', JSON.stringify(s)); }
 function loadWeightEntries(){ return JSON.parse(localStorage.getItem('weightEntries')||'[]'); }
 function saveWeightEntries(e){ localStorage.setItem('weightEntries', JSON.stringify(e)); }
 function loadShoppingChecked(){ return JSON.parse(localStorage.getItem('shoppingChecked')||'{}'); }
@@ -491,6 +573,50 @@ function sumFoodLogMacros(dateStr){
   const totals = {kcal:0,p:0,c:0,f:0};
   getFoodLogForDate(dateStr).forEach(e=>{ totals.kcal+=e.kcal; totals.p+=e.p; totals.c+=e.c; totals.f+=e.f; });
   return totals;
+}
+function loadApiKey(){ return localStorage.getItem('anthropicApiKey') || ''; }
+function saveApiKey(k){ localStorage.setItem('anthropicApiKey', k); }
+async function callClaudeAPI(bodyObj){
+  const apiKey = loadApiKey();
+  if(!apiKey) throw new Error('NO_API_KEY');
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify(bodyObj)
+  });
+  if(!response.ok){
+    if(response.status===401) throw new Error('BAD_API_KEY');
+    throw new Error('API error '+response.status);
+  }
+  return response.json();
+}
+function openApiKeyModal(){
+  document.getElementById('apikey-input').value = loadApiKey();
+  const modal = document.getElementById('apikey-modal');
+  const sheet = document.getElementById('apikey-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeApiKeyModal(){
+  const modal = document.getElementById('apikey-modal');
+  const sheet = document.getElementById('apikey-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+function saveApiKeyFromInput(){
+  const val = document.getElementById('apikey-input').value.trim();
+  saveApiKey(val);
+  closeApiKeyModal();
+}
+function apiErrorMessage(err){
+  if(err && err.message==='NO_API_KEY') return 'Necesitas añadir tu clave de API de Anthropic. <button onclick="openApiKeyModal()" class="underline font-semibold">Configurar ahora</button>';
+  if(err && err.message==='BAD_API_KEY') return 'Tu clave de API no es válida. <button onclick="openApiKeyModal()" class="underline font-semibold">Revisarla</button>';
+  return null;
 }
 function loadPantryText(){ return localStorage.getItem('pantryIngredients')||''; }
 function savePantryText(t){ localStorage.setItem('pantryIngredients', t); }
@@ -540,37 +666,62 @@ function showTab(tab){
    ============================================================ */
 function parseMacros(macrosStr){
   const kcalMatch = macrosStr.match(/≈([\d.]+)\s*kcal/);
-  const pMatch = macrosStr.match(/P\s*(\d+)\s*g/);
-  const cMatch = macrosStr.match(/C\s*(\d+)\s*g/);
-  const gMatch = macrosStr.match(/G\s*(\d+)\s*g/);
+  const pMatch = macrosStr.match(/P\s*([\d.]+)\s*g/);
+  const cMatch = macrosStr.match(/C\s*([\d.]+)\s*g/);
+  const gMatch = macrosStr.match(/G\s*([\d.]+)\s*g/);
   return {
-    kcal: kcalMatch ? parseFloat(kcalMatch[1].replace('.','')) : 0,
-    p: pMatch ? parseInt(pMatch[1]) : 0,
-    c: cMatch ? parseInt(cMatch[1]) : 0,
-    f: gMatch ? parseInt(gMatch[1]) : 0
+    kcal: kcalMatch ? parseFloat(kcalMatch[1]) : 0,
+    p: pMatch ? parseFloat(pMatch[1]) : 0,
+    c: cMatch ? parseFloat(cMatch[1]) : 0,
+    f: gMatch ? parseFloat(gMatch[1]) : 0
   };
 }
 function sumMacros(totals, m){ totals.kcal+=m.kcal; totals.p+=m.p; totals.c+=m.c; totals.f+=m.f; }
 
-function renderMacroBars(consumed){
-  const rows = [
-    {label:'Calorías', unit:'', c:consumed.kcal, t:DAILY_TARGETS.kcal, color:'#F0A431'},
+function buildRingSvg(pct, color, size, stroke){
+  const r = (size-stroke)/2;
+  const c = 2*Math.PI*r;
+  const offset = c*(1-Math.min(1,Math.max(0,pct)));
+  const center = size/2;
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" class="-rotate-90 block">
+    <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="#242429" stroke-width="${stroke}"/>
+    <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" stroke-linecap="round"
+      style="transition: stroke-dashoffset .5s ease;"/>
+  </svg>`;
+}
+function renderMacroRings(consumed){
+  const items = [
+    {label:'Calorías', unit:' kcal', c:consumed.kcal, t:DAILY_TARGETS.kcal, color:'#F0A431'},
     {label:'Proteína', unit:'g', c:consumed.p, t:DAILY_TARGETS.p, color:'#E86A6A'},
     {label:'Carbohidratos', unit:'g', c:consumed.c, t:DAILY_TARGETS.c, color:'#6BA8E8'},
     {label:'Grasas', unit:'g', c:consumed.f, t:DAILY_TARGETS.f, color:'#B98AE8'},
   ];
-  document.getElementById('dieta-macro-bars').innerHTML = rows.map(r=>{
-    const pct = Math.min(100, Math.round((r.c/r.t)*100));
-    return `<div>
-      <div class="flex justify-between items-baseline mb-1">
-        <span class="text-[10px] font-semibold uppercase tracking-[0.1em]" style="color:${r.color}">${r.label}</span>
-        <span class="text-[11px] font-mono"><span class="text-bone font-bold">${r.c}</span><span class="text-steeldim">${r.unit} / ${r.t}${r.unit}</span></span>
+  const main = items[0];
+  const smalls = items.slice(1);
+  const mainHtml = `
+    <div class="flex flex-col items-center">
+      <div class="relative" style="width:148px;height:148px">
+        ${buildRingSvg(main.c/main.t, main.color, 148, 13)}
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-[27px] font-bold font-mono leading-none">${main.c.toFixed(1)}</span>
+          <span class="text-[11px] text-steel mt-1.5">/ ${main.t}${main.unit}</span>
+        </div>
       </div>
-      <div class="h-1.5 bg-panelraised rounded-full overflow-hidden">
-        <div class="h-full rounded-full" style="width:${pct}%; background-color:${r.color}; transition: width .4s ease;"></div>
-      </div>
+      <span class="text-[11px] font-semibold uppercase tracking-[0.1em] mt-2.5" style="color:${main.color}">${main.label}</span>
     </div>`;
-  }).join('');
+  const smallsHtml = smalls.map(it=>`
+    <div class="flex flex-col items-center gap-1.5">
+      <div class="relative" style="width:72px;height:72px">
+        ${buildRingSvg(it.c/it.t, it.color, 72, 8)}
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="text-[12px] font-bold font-mono">${it.c.toFixed(1)}</span>
+        </div>
+      </div>
+      <span class="text-[9px] font-semibold uppercase tracking-[0.06em] text-center leading-tight" style="color:${it.color}">${it.label}</span>
+      <span class="text-[9px] text-steeldim font-mono">/ ${it.t}${it.unit}</span>
+    </div>`).join('');
+  document.getElementById('dieta-macro-rings').innerHTML = mainHtml + `<div class="flex justify-center gap-5 mt-5">${smallsHtml}</div>`;
 }
 
 function renderDieta(){
@@ -581,7 +732,7 @@ function renderDieta(){
   document.getElementById('dieta-title').textContent = 'Hoy · '+dayLabelsFull[todayIdx];
 
   // macros de hoy (registro libre de comidas)
-  renderMacroBars(sumFoodLogMacros(todayISO));
+  renderMacroRings(sumFoodLogMacros(todayISO));
 
   // tarjeta de creatina (fija, todos los días)
   const creatineDone = !!completions[todayISO+'_creatine'];
@@ -601,6 +752,7 @@ function renderDieta(){
   `;
   container.appendChild(creatineCard);
 
+  renderFoodChatMessages();
   renderDietaRecipes();
 }
 
@@ -739,6 +891,8 @@ function renderEntreno(){
       onclick="toggleWorkoutDay('${iso}')">${d}</button>`;
   }
   grid.innerHTML = html;
+
+  renderExerciseList();
 }
 function toggleWorkoutDay(iso){
   const w = loadWorkoutDays();
@@ -758,6 +912,185 @@ function toggleWorkoutDay(iso){
 function changeMonth(delta){
   state.calendarMonth.setMonth(state.calendarMonth.getMonth()+delta);
   renderEntreno();
+}
+
+/* ============================================================
+   REGISTRO DE FUERZA (ejercicios, series, progreso)
+   ============================================================ */
+function selectMuscleTab(tab){
+  state.muscleTab = tab;
+  renderExerciseList();
+}
+function updateMuscleTabStyles(){
+  const upperBtn = document.getElementById('muscle-tab-upper');
+  const lowerBtn = document.getElementById('muscle-tab-lower');
+  const thumb = document.getElementById('muscle-tab-thumb');
+  const isUpper = state.muscleTab==='upper';
+  thumb.style.transform = isUpper ? 'translateX(0)' : 'translateX(100%)';
+  upperBtn.className = `tap-scale relative z-10 flex-1 py-2.5 rounded-lg font-semibold text-[13px] ${isUpper?'text-graphite':'text-steel'}`;
+  lowerBtn.className = `tap-scale relative z-10 flex-1 py-2.5 rounded-lg font-semibold text-[13px] ${!isUpper?'text-graphite':'text-steel'}`;
+}
+function renderExerciseList(){
+  updateMuscleTabStyles();
+  const exercises = loadExercises().filter(e=>e.category===state.muscleTab);
+  const sets = loadExerciseSets();
+  const wrap = document.getElementById('exercise-list');
+  if(exercises.length===0){
+    wrap.innerHTML = `<p class="text-steel text-[13px] text-center py-6">Aún no has añadido ejercicios de ${state.muscleTab==='upper'?'upper body':'lower body'}.</p>`;
+    return;
+  }
+  wrap.innerHTML = exercises.map(ex=>{
+    const exSets = sets.filter(s=>s.exerciseId===ex.id).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    const last = exSets[0];
+    const lastText = last ? `Último: ${last.weight}kg × ${last.reps} · ${formatShortDate(last.date)}` : 'Sin registros todavía';
+    return `<div class="bg-panel border border-white/[0.06] rounded-2xl p-4 flex justify-between items-center tap-scale" onclick="openExerciseDetailModal('${ex.id}')">
+      <div>
+        <h3 class="font-bold text-[15px] leading-snug">${escapeHtml(ex.name)}</h3>
+        <p class="text-[12px] text-steel mt-1">${lastText}</p>
+      </div>
+      <span class="text-steel text-lg shrink-0 ml-2">›</span>
+    </div>`;
+  }).join('');
+}
+function formatShortDate(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+}
+function openAddExerciseModal(){
+  document.getElementById('add-exercise-eyebrow').textContent = state.muscleTab==='upper' ? 'Upper body' : 'Lower body';
+  document.getElementById('add-exercise-name').value = '';
+  const modal = document.getElementById('add-exercise-modal');
+  const sheet = document.getElementById('add-exercise-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+  setTimeout(()=>document.getElementById('add-exercise-name').focus(), 300);
+}
+function closeAddExerciseModal(){
+  const modal = document.getElementById('add-exercise-modal');
+  const sheet = document.getElementById('add-exercise-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+}
+function saveNewExercise(){
+  const name = document.getElementById('add-exercise-name').value.trim();
+  if(!name) return;
+  const exercises = loadExercises();
+  exercises.push({ id: 'ex'+Date.now(), name, category: state.muscleTab, createdAt: Date.now() });
+  saveExercises(exercises);
+  closeAddExerciseModal();
+  renderExerciseList();
+}
+function openExerciseDetailModal(id){
+  state.currentExerciseId = id;
+  renderExerciseDetail();
+  const modal = document.getElementById('exercise-detail-modal');
+  const sheet = document.getElementById('exercise-detail-modal-sheet');
+  modal.classList.remove('hidden-view');
+  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
+}
+function closeExerciseDetailModal(){
+  const modal = document.getElementById('exercise-detail-modal');
+  const sheet = document.getElementById('exercise-detail-modal-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
+  state.currentExerciseId = null;
+}
+function renderExerciseDetail(){
+  const ex = loadExercises().find(e=>e.id===state.currentExerciseId);
+  if(!ex) return;
+  document.getElementById('exercise-detail-eyebrow').textContent = ex.category==='upper' ? 'Upper body' : 'Lower body';
+  document.getElementById('exercise-detail-title').textContent = ex.name;
+  document.getElementById('exercise-weight-input').value = '';
+  document.getElementById('exercise-reps-input').value = '';
+
+  const sets = loadExerciseSets().filter(s=>s.exerciseId===ex.id);
+
+  // PR (peso máximo histórico)
+  const pr = sets.reduce((max,s)=>Math.max(max, s.weight), 0);
+  document.getElementById('exercise-detail-pr').textContent = pr>0 ? `PR: ${pr}kg` : '';
+
+  // series de hoy
+  const todayISO = toISODate(new Date());
+  const todayCount = sets.filter(s=>s.date===todayISO).length;
+  document.getElementById('exercise-today-count').textContent = todayCount>0 ? `${todayCount} serie${todayCount===1?'':'s'} hoy` : 'Aún no has registrado series hoy';
+
+  // gráfica: peso máximo por día, ordenado cronológicamente
+  const byDate = {};
+  sets.forEach(s=>{ byDate[s.date] = Math.max(byDate[s.date]||0, s.weight); });
+  const points = Object.keys(byDate).sort().map(date=>({date, weight:byDate[date]}));
+  document.getElementById('exercise-chart-wrap').innerHTML = buildExerciseChartSvg(points);
+
+  // historial (series individuales, más reciente primero)
+  const sorted = sets.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const historyEl = document.getElementById('exercise-history-list');
+  if(sorted.length===0){
+    historyEl.innerHTML = `<p class="text-steel text-[13px] text-center py-6">Registra tu primera serie arriba.</p>`;
+  } else {
+    historyEl.innerHTML = sorted.map(s=>`
+      <div class="relative overflow-hidden">
+        <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
+          <button class="text-white font-semibold text-sm" onclick="deleteExerciseSet('${s.id}')">Eliminar</button>
+        </div>
+        <div class="exercise-set-row bg-panel flex justify-between items-center p-3.5 relative" style="transform:translateX(0);" data-id="${s.id}">
+          <span class="text-[13px] text-steel">${formatShortDate(s.date)}</span>
+          <span class="font-mono font-bold text-[14px]">${s.weight}kg × ${s.reps}</span>
+        </div>
+      </div>
+    `).join('');
+    attachSwipeHandlers('.exercise-set-row');
+  }
+}
+function addExerciseSet(){
+  const weight = parseFloat(document.getElementById('exercise-weight-input').value.replace(',','.'));
+  const reps = parseInt(document.getElementById('exercise-reps-input').value);
+  if(isNaN(weight) || weight<=0 || isNaN(reps) || reps<=0) return;
+  const sets = loadExerciseSets();
+  sets.push({ id:'s'+Date.now(), exerciseId: state.currentExerciseId, date: toISODate(new Date()), weight, reps, ts: Date.now() });
+  saveExerciseSets(sets);
+  document.getElementById('exercise-weight-input').value = weight;
+  document.getElementById('exercise-reps-input').value = '';
+  document.getElementById('exercise-reps-input').focus();
+  renderExerciseDetail();
+  renderExerciseList();
+}
+function deleteExerciseSet(id){
+  const sets = loadExerciseSets().filter(s=>s.id!==id);
+  saveExerciseSets(sets);
+  renderExerciseDetail();
+  renderExerciseList();
+}
+function deleteExercise(){
+  const id = state.currentExerciseId;
+  if(!id) return;
+  const exercises = loadExercises().filter(e=>e.id!==id);
+  saveExercises(exercises);
+  const sets = loadExerciseSets().filter(s=>s.exerciseId!==id);
+  saveExerciseSets(sets);
+  closeExerciseDetailModal();
+  renderExerciseList();
+}
+function buildExerciseChartSvg(points){
+  if(points.length<2){
+    return `<div class="h-[120px] flex items-center justify-center"><p class="text-steel text-[12.5px] text-center px-4">Registra al menos 2 días distintos para ver tu progreso aquí.</p></div>`;
+  }
+  const w = 300, h = 120, padX = 8, padY = 14;
+  const weights = points.map(p=>p.weight);
+  const minW = Math.min(...weights), maxW = Math.max(...weights);
+  const range = maxW-minW || 1;
+  const stepX = (w-padX*2)/(points.length-1);
+  const coords = points.map((p,i)=>{
+    const x = padX + i*stepX;
+    const y = padY + (h-padY*2) * (1 - (p.weight-minW)/range);
+    return {x,y,weight:p.weight};
+  });
+  const pathD = coords.map((c,i)=> (i===0?'M':'L') + c.x.toFixed(1) + ' ' + c.y.toFixed(1)).join(' ');
+  const areaD = pathD + ` L${coords[coords.length-1].x.toFixed(1)} ${h-padY} L${coords[0].x.toFixed(1)} ${h-padY} Z`;
+  const dots = coords.map(c=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="2.5" fill="#F0A431"/>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" class="w-full" style="height:120px">
+    <path d="${areaD}" fill="#F0A431" opacity="0.12"/>
+    <path d="${pathD}" fill="none" stroke="#F0A431" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
 }
 
 /* ============================================================
@@ -798,11 +1131,11 @@ function renderPeso(){
     historyEl.innerHTML = reversed.map(e=>{
       const d = new Date(e.date+'T00:00:00');
       const dateStr = d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
-      return `<div class="relative overflow-hidden rounded-xl">
+      return `<div class="relative overflow-hidden">
         <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
           <button class="text-white font-semibold text-sm" onclick="deleteWeightEntry('${e.date}')">Eliminar</button>
         </div>
-        <div class="weight-row bg-panel border border-white/[0.06] flex justify-between items-center p-3.5 relative rounded-xl" style="transform:translateX(0);" data-date="${e.date}">
+        <div class="weight-row bg-panel flex justify-between items-center p-3.5 relative" style="transform:translateX(0);" data-date="${e.date}">
           <span class="text-[13.5px] text-steel capitalize">${dateStr}</span>
           <span class="font-mono font-bold text-[15px]">${e.weight.toFixed(1)} kg</span>
         </div>
@@ -905,11 +1238,11 @@ function renderGastos(){
       const d = new Date(e.date+'T00:00:00');
       const dateStr = d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
       const noteHtml = e.note ? ' · '+escapeHtml(e.note) : '';
-      return `<div class="relative overflow-hidden rounded-xl">
+      return `<div class="relative overflow-hidden">
         <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
           <button class="text-white font-semibold text-sm" onclick="deleteExpense('${e.id}')">Eliminar</button>
         </div>
-        <div class="expense-row bg-panel border border-white/[0.06] flex justify-between items-center p-3.5 relative rounded-xl" style="transform:translateX(0);" data-id="${e.id}">
+        <div class="expense-row bg-panel flex justify-between items-center p-3.5 relative" style="transform:translateX(0);" data-id="${e.id}">
           <div class="flex items-center gap-3 min-w-0">
             <span class="text-lg shrink-0">${cat.emoji}</span>
             <div class="min-w-0">
@@ -1027,23 +1360,6 @@ function saveBudgets(){
 /* ============================================================
    REGISTRO LIBRE DE COMIDA (chat + IA)
    ============================================================ */
-function openFoodChatModal(){
-  renderFoodChatMessages();
-  const modal = document.getElementById('food-chat-modal');
-  const sheet = document.getElementById('food-chat-modal-sheet');
-  modal.classList.remove('hidden-view');
-  requestAnimationFrame(()=>{ sheet.style.transform = 'translateY(0)'; });
-  setTimeout(()=>{
-    document.getElementById('food-chat-input').focus();
-    scrollFoodChatToBottom();
-  }, 300);
-}
-function closeFoodChatModal(){
-  const modal = document.getElementById('food-chat-modal');
-  const sheet = document.getElementById('food-chat-modal-sheet');
-  sheet.style.transform = 'translateY(100%)';
-  setTimeout(()=>{ modal.classList.add('hidden-view'); }, 280);
-}
 function autoGrowTextarea(el){
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 112) + 'px';
@@ -1073,7 +1389,7 @@ function renderFoodChatMessages(){
       </div>
       <div class="food-log-row bg-panelraised rounded-2xl p-3.5 relative" style="transform:translateX(0);">
         <p class="text-[13.5px] text-bone leading-snug">${escapeHtml(e.text)}</p>
-        <p class="text-[11.5px] font-mono text-signal mt-2">≈${Math.round(e.kcal)} kcal · P ${Math.round(e.p)}g · C ${Math.round(e.c)}g · G ${Math.round(e.f)}g</p>
+        <p class="text-[11.5px] font-mono text-signal mt-2">≈${e.kcal.toFixed(1)} kcal · P ${e.p.toFixed(1)}g · C ${e.c.toFixed(1)}g · G ${e.f.toFixed(1)}g</p>
       </div>
     </div>
   `).join('');
@@ -1120,7 +1436,8 @@ async function sendFoodLogMessage(){
     if(state.activeTab==='dieta') renderDieta();
   } catch(err){
     document.getElementById(loadingId)?.remove();
-    wrap.insertAdjacentHTML('beforeend', `<div class="bg-panelraised rounded-2xl p-3.5 ml-8"><p class="text-danger text-[13px]">No he podido calcularlo. Inténtalo de nuevo.</p></div>`);
+    const specific = apiErrorMessage(err);
+    wrap.insertAdjacentHTML('beforeend', `<div class="bg-panelraised rounded-2xl p-3.5 ml-8"><p class="text-danger text-[13px]">${specific || 'No he podido calcularlo. Inténtalo de nuevo.'}</p></div>`);
     scrollFoodChatToBottom();
   } finally {
     input.disabled = false;
@@ -1130,18 +1447,12 @@ async function sendFoodLogMessage(){
   }
 }
 async function estimateMacrosFromText(text){
-  const prompt = `Estima el valor nutricional total de esta comida tal y como está descrita (respeta los pesos indicados exactamente como se dan, sean en crudo o cocinados, según lo que diga el texto). Responde ÚNICAMENTE con un objeto JSON, sin texto adicional, sin markdown ni backticks, con exactamente estas claves numéricas: kcal, protein_g, carbs_g, fat_g. Comida: "${text.replace(/"/g,"'")}"`;
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }]
-    })
+  const prompt = `Estima el valor nutricional total de esta comida tal y como está descrita (respeta los pesos indicados exactamente como se dan, sean en crudo o cocinados, según lo que diga el texto). Da los valores con precisión de una décima (un decimal). Responde ÚNICAMENTE con un objeto JSON, sin texto adicional, sin markdown ni backticks, con exactamente estas claves numéricas (con un decimal): kcal, protein_g, carbs_g, fat_g. Comida: "${text.replace(/"/g,"'")}"`;
+  const data = await callClaudeAPI({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1000,
+    messages: [{ role: "user", content: prompt }]
   });
-  if(!response.ok) throw new Error('API error '+response.status);
-  const data = await response.json();
   const textBlock = (data.content||[]).find(b=>b.type==='text');
   if(!textBlock) throw new Error('Respuesta vacía');
   const clean = textBlock.text.replace(/```json|```/g,'').trim();
@@ -1195,27 +1506,22 @@ async function handleReceiptUpload(event){
     statusEl.textContent = `Añadidos ${items.length} productos del ticket. Revisa la lista antes de generar recetas.`;
   } catch(err){
     statusEl.className = 'text-[11px] text-danger mt-1.5';
-    statusEl.textContent = 'No he podido leer el ticket. Prueba con otra foto o añade los ingredientes a mano.';
+    const specific = apiErrorMessage(err);
+    statusEl.innerHTML = specific || 'No he podido leer el ticket. Prueba con otra foto o añade los ingredientes a mano.';
   }
 }
 async function extractReceiptItems(base64Data){
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64Data } },
-          { type: "text", text: "Este es un ticket de la compra del supermercado. Extrae solo los productos de alimentación (ignora bolsas, descuentos, impuestos, totales y datos de la tienda). Responde ÚNICAMENTE con un array JSON de strings, sin texto adicional, sin markdown ni backticks, cada string con formato \"Producto: cantidad\" (usa la cantidad o peso del ticket si aparece, o solo el nombre del producto si no hay cantidad clara)." }
-        ]
-      }]
-    })
+  const data = await callClaudeAPI({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1000,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64Data } },
+        { type: "text", text: "Este es un ticket de la compra del supermercado. Extrae solo los productos de alimentación (ignora bolsas, descuentos, impuestos, totales y datos de la tienda). Responde ÚNICAMENTE con un array JSON de strings, sin texto adicional, sin markdown ni backticks, cada string con formato \"Producto: cantidad\" (usa la cantidad o peso del ticket si aparece, o solo el nombre del producto si no hay cantidad clara)." }
+      ]
+    }]
   });
-  if(!response.ok) throw new Error('API error '+response.status);
-  const data = await response.json();
   const textBlock = (data.content||[]).find(b=>b.type==='text');
   if(!textBlock) throw new Error('Respuesta vacía');
   const clean = textBlock.text.replace(/```json|```/g,'').trim();
@@ -1310,7 +1616,8 @@ async function generatePantryRecipes(){
     savePantryRecipes(recipes);
     renderPantryRecipes();
   } catch(err){
-    wrap.innerHTML = `<p class="text-danger text-sm text-center py-6">No he podido generar recetas. Inténtalo de nuevo.</p>`;
+    const specific = apiErrorMessage(err);
+    wrap.innerHTML = `<p class="text-danger text-sm text-center py-6">${specific || 'No he podido generar recetas. Inténtalo de nuevo.'}</p>`;
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
@@ -1318,18 +1625,12 @@ async function generatePantryRecipes(){
   }
 }
 async function fetchPantryRecipes(pantryText){
-  const prompt = `Con estos ingredientes que tengo en casa: "${pantryText.replace(/"/g,"'")}", sugiere 3 recetas sencillas y equilibradas, altas en proteína, preparadas al air fryer o a la sartén, sin pasos complicados. Puedes asumir que también tengo básicos de despensa (aceite de oliva, sal, especias, ajo). Responde ÚNICAMENTE con un array JSON de 3 objetos, sin texto adicional, sin markdown ni backticks, cada uno con exactamente estas claves: "title" (string), "ingredients" (array de strings, cada uno con formato "Ingrediente: cantidad"), "method" (string breve, empezando con 🔥 si usa air fryer o sartén), "macros" (string con el formato exacto "≈XXXX kcal · P Xg · C Xg · G Xg").`;
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      messages: [{ role: "user", content: prompt }]
-    })
+  const prompt = `Con estos ingredientes que tengo en casa: "${pantryText.replace(/"/g,"'")}", sugiere 3 recetas sencillas, preparadas al air fryer o a la sartén, sin pasos complicados. Cada receta debe ajustar sus cantidades para acercarse lo máximo posible a estos macros por ración: aproximadamente 1200 kcal, 80 g de proteína, 150 g de carbohidratos y 30 g de grasas (ajusta las cantidades de los ingredientes que decidas usar para lograrlo, no hace falta usarlos todos si no encajan). Puedes asumir que también tengo básicos de despensa (aceite de oliva, sal, especias, ajo). Responde ÚNICAMENTE con un array JSON de 3 objetos, sin texto adicional, sin markdown ni backticks, cada uno con exactamente estas claves: "title" (string), "ingredients" (array de strings, cada uno con formato "Ingrediente: cantidad"), "method" (string breve, empezando con 🔥 si usa air fryer o sartén), "macros" (string con el formato exacto "≈XXXX.X kcal · P XX.Xg · C XX.Xg · G XX.Xg", con un decimal en cada valor, lo más cercanos posible al objetivo indicado).`;
+  const data = await callClaudeAPI({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1500,
+    messages: [{ role: "user", content: prompt }]
   });
-  if(!response.ok) throw new Error('API error '+response.status);
-  const data = await response.json();
   const textBlock = (data.content||[]).find(b=>b.type==='text');
   if(!textBlock) throw new Error('Respuesta vacía');
   const clean = textBlock.text.replace(/```json|```/g,'').trim();
@@ -1343,7 +1644,7 @@ async function fetchPantryRecipes(pantryText){
   }));
 }
 
-const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','expenseCategories','expenses','foodLogEntries','pantryIngredients','pantryRecipes'];
+const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','expenseCategories','expenses','foodLogEntries','pantryIngredients','pantryRecipes','exercises','exerciseSets'];
 function exportData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
