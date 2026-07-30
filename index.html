@@ -64,9 +64,27 @@
   .view-active { animation: viewFadeIn .28s cubic-bezier(.22,.61,.36,1); }
   .nav-dot { width: 3px; height: 3px; border-radius: 999px; background: currentColor; opacity: 0; transition: opacity .15s ease; }
   .nav-btn.text-signal .nav-dot { opacity: 1; }
+  @keyframes streakBump { 0% { transform: scale(1); } 35% { transform: scale(1.4); } 65% { transform: scale(0.94); } 100% { transform: scale(1); } }
+  @keyframes streakGlow { 0%, 100% { text-shadow: none; } 40% { text-shadow: 0 0 18px rgba(240,164,49,0.85); } }
+  @keyframes emojiPop { 0% { transform: scale(1) rotate(0deg); } 40% { transform: scale(1.3) rotate(-8deg); } 70% { transform: scale(0.95) rotate(4deg); } 100% { transform: scale(1) rotate(0deg); } }
+  .streak-bump { animation: streakBump .55s cubic-bezier(.34,1.56,.64,1), streakGlow .55s ease; }
+  .emoji-pop { animation: emojiPop .55s cubic-bezier(.34,1.56,.64,1); }
+  #loading-screen { position: fixed; inset: 0; z-index: 9999; background: #131316; display: flex; align-items: center; justify-content: center; transition: opacity .4s ease; }
+  #loading-screen.loading-hidden { opacity: 0; pointer-events: none; }
+  .loading-ring { width: 44px; height: 44px; border-radius: 999px; border: 3px solid rgba(240,164,49,0.18); border-top-color: #F0A431; animation: loadingSpin .8s linear infinite; }
+  @keyframes loadingSpin { to { transform: rotate(360deg); } }
+  @keyframes loadingPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+  .loading-label { animation: loadingPulse 1.4s ease-in-out infinite; }
 </style>
 </head>
 <body class="bg-graphite text-bone">
+
+<div id="loading-screen">
+  <div class="flex flex-col items-center gap-4">
+    <div class="loading-ring"></div>
+    <p class="loading-label text-[11px] font-semibold text-steel uppercase tracking-[0.18em]">Cargando</p>
+  </div>
+</div>
 
 <div id="app">
 
@@ -124,17 +142,6 @@
       <div id="streak-emoji" class="text-4xl transition-opacity">🔥</div>
     </div>
 
-    <div id="today-exercise-card" class="hidden bg-panel border border-white/[0.06] rounded-2xl p-5 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Ejercicios de hoy</p>
-          <h2 id="today-exercise-session-title" class="text-[18px] font-bold mt-0.5"></h2>
-        </div>
-        <span id="today-exercise-progress" class="font-mono text-[13px] text-signal font-bold"></span>
-      </div>
-      <div id="today-exercise-list" class="space-y-2"></div>
-    </div>
-
     <div class="flex items-center justify-between mb-4">
       <button onclick="changeMonth(-1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">‹</button>
       <span id="month-label" class="font-semibold text-[15px]"></span>
@@ -158,6 +165,17 @@
     </div>
 
     <p class="text-[12px] text-steel mt-3 leading-relaxed">Toca un día para marcarlo como entrenado. Vuelve a tocarlo para marcarlo como descanso — no rompe la racha, hasta 3 por semana. Un tercer toque lo deja vacío.</p>
+
+    <div id="today-exercise-card" class="hidden bg-panel border border-white/[0.06] rounded-2xl p-5 mt-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Ejercicios de hoy</p>
+          <h2 id="today-exercise-session-title" class="text-[18px] font-bold mt-0.5"></h2>
+        </div>
+        <span id="today-exercise-progress" class="font-mono text-[13px] text-signal font-bold"></span>
+      </div>
+      <div id="today-exercise-list" class="space-y-2"></div>
+    </div>
 
     <h3 class="font-semibold text-[15px] mt-7 mb-3">Registro de fuerza</h3>
     <div class="relative bg-panelraised rounded-xl p-1 mb-4 flex">
@@ -558,7 +576,7 @@ function getDefaultSnack(){
 /* ============================================================
    ESTADO Y PERSISTENCIA
    ============================================================ */
-const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null, muscleTab: 'upper', currentExerciseId: null };
+const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null, muscleTab: 'upper', currentExerciseId: null, lastStreak: null };
 
 function pad(n){ return String(n).padStart(2,'0'); }
 function toISODate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -869,10 +887,17 @@ function renderEntreno(){
     else if(s==='rest'){ cursor.setDate(cursor.getDate()-1); }
     else break;
   }
-  document.getElementById('streak-count').textContent = streak;
+  const streakChanged = state.lastStreak !== null && state.lastStreak !== streak;
+  state.lastStreak = streak;
+  const countEl = document.getElementById('streak-count');
+  countEl.textContent = streak;
   const emojiEl = document.getElementById('streak-emoji');
   emojiEl.textContent = getStreakEmoji(streak);
   emojiEl.style.opacity = streak===0 ? '0.35' : '1';
+  if(streakChanged){
+    countEl.classList.remove('streak-bump'); void countEl.offsetWidth; countEl.classList.add('streak-bump');
+    emojiEl.classList.remove('emoji-pop'); void emojiEl.offsetWidth; emojiEl.classList.add('emoji-pop');
+  }
 
   // calendario del mes
   const year = state.calendarMonth.getFullYear();
@@ -1885,6 +1910,21 @@ function attachSwipeHandlers(selector){
    ============================================================ */
 seedDefaultExercises();
 showTab(state.activeTab);
+
+const loadingStart = Date.now();
+const MIN_LOADING_MS = 400;
+function hideLoadingScreen(){
+  const el = document.getElementById('loading-screen');
+  if(!el) return;
+  const elapsed = Date.now() - loadingStart;
+  const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+  setTimeout(()=>{
+    el.classList.add('loading-hidden');
+    setTimeout(()=>el.remove(), 450);
+  }, wait);
+}
+if(document.readyState === 'complete') hideLoadingScreen();
+else window.addEventListener('load', hideLoadingScreen);
 </script>
 </body>
 </html>
