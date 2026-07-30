@@ -124,6 +124,17 @@
       <div id="streak-emoji" class="text-4xl transition-opacity">🔥</div>
     </div>
 
+    <div id="today-exercise-card" class="hidden bg-panel border border-white/[0.06] rounded-2xl p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-[11px] font-semibold text-steel uppercase tracking-[0.14em]">Ejercicios de hoy</p>
+          <h2 id="today-exercise-session-title" class="text-[18px] font-bold mt-0.5"></h2>
+        </div>
+        <span id="today-exercise-progress" class="font-mono text-[13px] text-signal font-bold"></span>
+      </div>
+      <div id="today-exercise-list" class="space-y-2"></div>
+    </div>
+
     <div class="flex items-center justify-between mb-4">
       <button onclick="changeMonth(-1)" class="tap-scale w-9 h-9 flex items-center justify-center bg-panel border border-white/[0.06] rounded-full text-bone text-lg">‹</button>
       <span id="month-label" class="font-semibold text-[15px]"></span>
@@ -845,6 +856,7 @@ function countRestDaysInWeek(dateObj, workoutDays){
 
 function renderEntreno(){
   const workoutDays = loadWorkoutDays();
+  renderTodayExerciseCard();
 
   // racha: los días de descanso no la rompen, pero tampoco suman
   let streak = 0;
@@ -914,6 +926,118 @@ function toggleWorkoutDay(iso){
 function changeMonth(delta){
   state.calendarMonth.setMonth(state.calendarMonth.getMonth()+delta);
   renderEntreno();
+}
+
+/* ============================================================
+   EJERCICIOS DE HOY (checklist ligado al día de la semana)
+   ============================================================ */
+const todayExercisePlan = {
+  martes: { title: 'Sesión A', exercises: [
+    { name: 'Sentadilla goblet o prensa de piernas', sets: '3 x 8-10' },
+    { name: 'Press banca (barra o mancuernas)', sets: '3 x 8-10' },
+    { name: 'Remo con mancuerna o en máquina', sets: '3 x 8-10' },
+    { name: 'Peso muerto rumano', sets: '3 x 8-10' },
+    { name: 'Plancha', sets: '3 x 30-45 seg' },
+  ]},
+  miercoles: { title: 'Sesión B', exercises: [
+    { name: 'Zancadas o prensa a una pierna', sets: '3 x 10 (por pierna)' },
+    { name: 'Press militar (barra o mancuernas)', sets: '3 x 8-10' },
+    { name: 'Jalón al pecho o dominadas asistidas', sets: '3 x 8-10' },
+    { name: 'Hip thrust', sets: '3 x 10-12' },
+    { name: 'Elevación de piernas colgado o tumbado', sets: '3 x 12-15' },
+  ]},
+  viernes: { title: 'Sesión C', exercises: [
+    { name: 'Sentadilla o prensa de piernas', sets: '3 x 8-10' },
+    { name: 'Press inclinado o máquina de pecho', sets: '3 x 8-10' },
+    { name: 'Remo en polea baja', sets: '3 x 8-10' },
+    { name: 'Peso muerto convencional o rumano', sets: '3 x 8-10' },
+    { name: 'Plancha lateral', sets: '3 x 20-30 seg (cada lado)' },
+  ]},
+  sabado: { title: 'Brazos y cardio', exercises: [
+    { name: 'Curl de bíceps (barra o mancuerna)', sets: '3 x 10-12' },
+    { name: 'Extensión de tríceps en polea (o press francés)', sets: '3 x 10-12' },
+    { name: 'Curl martillo', sets: '3 x 10-12' },
+    { name: 'Fondos en banco o extensión sobre la cabeza', sets: '3 x 10-12' },
+    { name: 'Curl inclinado', sets: '2 x 12-15' },
+    { name: '10.000 pasos en cinta', sets: '' },
+  ]},
+};
+const dayKeyByIndex = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+function loadTodayExerciseCompletions(){ return JSON.parse(localStorage.getItem('todayExerciseCompletions')||'{}'); }
+function saveTodayExerciseCompletions(c){ localStorage.setItem('todayExerciseCompletions', JSON.stringify(c)); }
+function toggleTodayExercise(dateISO, idx){
+  const completions = loadTodayExerciseCompletions();
+  const key = dateISO+'_'+idx;
+  completions[key] = !completions[key];
+  saveTodayExerciseCompletions(completions);
+  renderTodayExerciseCard();
+}
+function renderTodayExerciseCard(){
+  const card = document.getElementById('today-exercise-card');
+  card.classList.remove('hidden');
+  const today = new Date();
+  const dayKey = dayKeyByIndex[today.getDay()];
+  const session = todayExercisePlan[dayKey];
+  const titleEl = document.getElementById('today-exercise-session-title');
+  const progressEl = document.getElementById('today-exercise-progress');
+  const list = document.getElementById('today-exercise-list');
+  if(!session){
+    titleEl.textContent = 'Día de descanso';
+    progressEl.textContent = '';
+    list.innerHTML = `<p class="text-steel text-[13px] text-center py-4">Hoy no toca entrenar — descansa 🙌</p>`;
+    return;
+  }
+  const todayISO = toISODate(today);
+  const completions = loadTodayExerciseCompletions();
+  titleEl.textContent = session.title;
+  const doneCount = session.exercises.filter((e,i)=>completions[todayISO+'_'+i]).length;
+  progressEl.textContent = doneCount+'/'+session.exercises.length;
+  list.innerHTML = session.exercises.map((ex,i)=>{
+    const done = !!completions[todayISO+'_'+i];
+    return `<button onclick="toggleTodayExercise('${todayISO}',${i})" class="tap-scale w-full flex items-center gap-3 bg-graphite/60 rounded-xl px-3 py-2.5 text-left">
+      <span class="w-5 h-5 rounded-md border-2 ${done ? 'bg-signal border-signal' : 'border-white/20'} flex items-center justify-center flex-shrink-0">${done ? '<span class="text-graphite text-[12px] font-bold">✓</span>' : ''}</span>
+      <span class="flex-1 ${done ? 'text-steel line-through' : 'text-bone'} text-[13px]">${escapeHtml(ex.name)}</span>
+      ${ex.sets ? `<span class="font-mono text-[11px] text-steel flex-shrink-0">${ex.sets}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+/* ============================================================
+   SEMILLA: ejercicios de fuerza por defecto en Registro de fuerza
+   ============================================================ */
+function seedDefaultExercises(){
+  const defaults = [
+    { name: 'Sentadilla goblet o prensa de piernas', category: 'lower' },
+    { name: 'Peso muerto rumano', category: 'lower' },
+    { name: 'Zancadas o prensa a una pierna', category: 'lower' },
+    { name: 'Hip thrust', category: 'lower' },
+    { name: 'Sentadilla o prensa de piernas', category: 'lower' },
+    { name: 'Peso muerto convencional o rumano', category: 'lower' },
+    { name: 'Press banca (barra o mancuernas)', category: 'upper' },
+    { name: 'Remo con mancuerna o en máquina', category: 'upper' },
+    { name: 'Plancha', category: 'upper' },
+    { name: 'Press militar (barra o mancuernas)', category: 'upper' },
+    { name: 'Jalón al pecho o dominadas asistidas', category: 'upper' },
+    { name: 'Elevación de piernas colgado o tumbado', category: 'upper' },
+    { name: 'Press inclinado o máquina de pecho', category: 'upper' },
+    { name: 'Remo en polea baja', category: 'upper' },
+    { name: 'Plancha lateral', category: 'upper' },
+    { name: 'Curl de bíceps (barra o mancuerna)', category: 'upper' },
+    { name: 'Extensión de tríceps en polea (o press francés)', category: 'upper' },
+    { name: 'Curl martillo', category: 'upper' },
+    { name: 'Fondos en banco o extensión sobre la cabeza', category: 'upper' },
+    { name: 'Curl inclinado', category: 'upper' },
+  ];
+  const exercises = loadExercises();
+  const existingNames = new Set(exercises.map(e=>e.name));
+  let added = false;
+  defaults.forEach((d,i)=>{
+    if(!existingNames.has(d.name)){
+      exercises.push({ id: 'exdefault'+i+'_'+Date.now(), name: d.name, category: d.category, createdAt: Date.now() });
+      added = true;
+    }
+  });
+  if(added) saveExercises(exercises);
 }
 
 /* ============================================================
@@ -1646,7 +1770,7 @@ async function fetchPantryRecipes(pantryText){
   }));
 }
 
-const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','expenseCategories','expenses','foodLogEntries','pantryIngredients','pantryRecipes','exercises','exerciseSets'];
+const BACKUP_KEYS = ['dietPlan','mealCompletions','workoutDays','weightEntries','shoppingChecked','dailySnack','expenseCategories','expenses','foodLogEntries','pantryIngredients','pantryRecipes','exercises','exerciseSets','todayExerciseCompletions'];
 function exportData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -1759,6 +1883,7 @@ function attachSwipeHandlers(selector){
 /* ============================================================
    INIT
    ============================================================ */
+seedDefaultExercises();
 showTab(state.activeTab);
 </script>
 </body>
