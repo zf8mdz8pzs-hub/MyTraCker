@@ -1004,32 +1004,41 @@ function changeMonth(delta){
    EJERCICIOS DE HOY (checklist ligado al día de la semana)
    ============================================================ */
 const todayExercisePlan = {
-  martes: { title: 'Sesión A', exercises: [
-    { name: 'Sentadilla goblet o prensa de piernas', sets: '3 x 8-10' },
+  martes: { title: 'Upper A', exercises: [
     { name: 'Press banca (barra o mancuernas)', sets: '3 x 8-10' },
-    { name: 'Remo con mancuerna o en máquina', sets: '3 x 8-10' },
-    { name: 'Peso muerto rumano', sets: '3 x 8-10' },
-    { name: 'Plancha', sets: '3 x 30-45 seg' },
-  ]},
-  miercoles: { title: 'Sesión B', exercises: [
-    { name: 'Zancadas o prensa a una pierna', sets: '3 x 10 (por pierna)' },
+    { name: 'Remo con mancuerna a una mano', sets: '3 x 8-10' },
     { name: 'Press militar (barra o mancuernas)', sets: '3 x 8-10' },
     { name: 'Jalón al pecho o dominadas asistidas', sets: '3 x 8-10' },
-    { name: 'Hip thrust', sets: '3 x 10-12' },
-    { name: 'Elevación de piernas colgado o tumbado', sets: '3 x 12-15' },
+    { name: 'Curl de bíceps', sets: '3 x 10-12' },
+    { name: 'Extensión de tríceps en polea', sets: '3 x 10-12' },
   ]},
-  viernes: { title: 'Sesión C', exercises: [
-    { name: 'Sentadilla o prensa de piernas', sets: '3 x 8-10' },
-    { name: 'Press inclinado o máquina de pecho', sets: '3 x 8-10' },
+  miercoles: { title: 'Lower A', exercises: [
+    { name: 'Sentadilla goblet o con barra', sets: '3 x 8-10' },
+    { name: 'Peso muerto rumano', sets: '3 x 8-10' },
+    { name: 'Zancadas con mancuernas', sets: '3 x 10 (por pierna)' },
+    { name: 'Elevación de gemelos', sets: '3 x 12-15' },
+    { name: 'Plancha', sets: '3 x 30-45 seg' },
+  ]},
+  viernes: { title: 'Upper B', exercises: [
+    { name: 'Press inclinado (barra o mancuernas)', sets: '3 x 8-10' },
     { name: 'Remo en polea baja', sets: '3 x 8-10' },
-    { name: 'Peso muerto convencional o rumano', sets: '3 x 8-10' },
+    { name: 'Elevaciones laterales', sets: '3 x 12-15' },
+    { name: 'Dominadas o jalón agarre cerrado', sets: '3 x 8-10' },
+    { name: 'Curl martillo', sets: '3 x 10-12' },
+    { name: 'Fondos en banco', sets: '3 x 10-12' },
+  ]},
+  sabado: { title: 'Lower B', exercises: [
+    { name: 'Peso muerto convencional', sets: '3 x 8-10' },
+    { name: 'Prensa de piernas', sets: '3 x 8-10' },
+    { name: 'Hip thrust', sets: '3 x 10-12' },
+    { name: 'Zancadas búlgaras', sets: '3 x 10 (por pierna)' },
     { name: 'Plancha lateral', sets: '3 x 20-30 seg (cada lado)' },
   ]},
-  sabado: { title: 'Brazos y cardio', exercises: [
-    { name: 'Curl de bíceps (barra o mancuerna)', sets: '3 x 10-12' },
-    { name: 'Extensión de tríceps en polea (o press francés)', sets: '3 x 10-12' },
+  domingo: { title: 'Brazos y cardio', exercises: [
+    { name: 'Curl de bíceps', sets: '3 x 10-12' },
+    { name: 'Extensión de tríceps en polea', sets: '3 x 10-12' },
     { name: 'Curl martillo', sets: '3 x 10-12' },
-    { name: 'Fondos en banco o extensión sobre la cabeza', sets: '3 x 10-12' },
+    { name: 'Fondos en banco', sets: '3 x 10-12' },
     { name: 'Curl inclinado', sets: '2 x 12-15' },
     { name: '10.000 pasos en cinta', sets: '' },
   ]},
@@ -1079,25 +1088,28 @@ function renderTodayExerciseCard(){
    ============================================================ */
 function seedDefaultExercises(){
   const defaults = [
-    { name: 'Sentadilla goblet o prensa de piernas', category: 'lower' },
+    { name: 'Sentadilla goblet o con barra', category: 'lower' },
     { name: 'Peso muerto rumano', category: 'lower' },
-    { name: 'Zancadas o prensa a una pierna', category: 'lower' },
+    { name: 'Zancadas con mancuernas', category: 'lower' },
+    { name: 'Elevación de gemelos', category: 'lower' },
+    { name: 'Peso muerto convencional', category: 'lower' },
+    { name: 'Prensa de piernas', category: 'lower' },
     { name: 'Hip thrust', category: 'lower' },
-    { name: 'Sentadilla o prensa de piernas', category: 'lower' },
-    { name: 'Peso muerto convencional o rumano', category: 'lower' },
+    { name: 'Zancadas búlgaras', category: 'lower' },
     { name: 'Press banca (barra o mancuernas)', category: 'upper' },
-    { name: 'Remo con mancuerna o en máquina', category: 'upper' },
-    { name: 'Plancha', category: 'upper' },
+    { name: 'Remo con mancuerna a una mano', category: 'upper' },
     { name: 'Press militar (barra o mancuernas)', category: 'upper' },
     { name: 'Jalón al pecho o dominadas asistidas', category: 'upper' },
-    { name: 'Elevación de piernas colgado o tumbado', category: 'upper' },
-    { name: 'Press inclinado o máquina de pecho', category: 'upper' },
+    { name: 'Plancha', category: 'upper' },
+    { name: 'Press inclinado (barra o mancuernas)', category: 'upper' },
     { name: 'Remo en polea baja', category: 'upper' },
+    { name: 'Elevaciones laterales', category: 'upper' },
+    { name: 'Dominadas o jalón agarre cerrado', category: 'upper' },
     { name: 'Plancha lateral', category: 'upper' },
-    { name: 'Curl de bíceps (barra o mancuerna)', category: 'upper' },
-    { name: 'Extensión de tríceps en polea (o press francés)', category: 'upper' },
+    { name: 'Curl de bíceps', category: 'upper' },
+    { name: 'Extensión de tríceps en polea', category: 'upper' },
     { name: 'Curl martillo', category: 'upper' },
-    { name: 'Fondos en banco o extensión sobre la cabeza', category: 'upper' },
+    { name: 'Fondos en banco', category: 'upper' },
     { name: 'Curl inclinado', category: 'upper' },
   ];
   const exercises = loadExercises();
@@ -1323,19 +1335,33 @@ function renderPeso(){
 
   const historyEl = document.getElementById('weight-history');
   const reversed = entries.slice().reverse();
+  const firstWeight = entries.length>0 ? entries[0].weight : null;
   if(reversed.length===0){
     historyEl.innerHTML = `<p class="text-steel text-sm text-center py-6">Aún no hay registros</p>`;
   } else {
     historyEl.innerHTML = reversed.map(e=>{
       const d = new Date(e.date+'T00:00:00');
       const dateStr = d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+      const isFirst = e.date === entries[0].date;
+      let diffHtml;
+      if(isFirst){
+        diffHtml = `<span class="text-[10.5px] text-steel uppercase tracking-wide">Peso inicial</span>`;
+      } else {
+        const diff = e.weight - firstWeight;
+        const diffStr = (diff>0?'+':'') + diff.toFixed(1) + ' kg';
+        const diffColor = diff < 0 ? '#34C759' : diff > 0 ? 'rgb(var(--color-danger))' : 'rgb(var(--color-steel))';
+        diffHtml = `<span class="text-[11.5px] font-mono font-bold" style="color:${diffColor}">${diffStr}</span>`;
+      }
       return `<div class="relative overflow-hidden">
         <div class="absolute inset-0 bg-danger flex items-center justify-end pr-4">
           <button class="text-white font-semibold text-sm" onclick="deleteWeightEntry('${e.date}')">Eliminar</button>
         </div>
         <div class="weight-row bg-panel flex justify-between items-center p-3.5 relative" style="transform:translateX(0);" data-date="${e.date}">
           <span class="text-[13.5px] text-steel capitalize">${dateStr}</span>
-          <span class="font-mono font-bold text-[15px]">${e.weight.toFixed(1)} kg</span>
+          <div class="flex items-center gap-3">
+            ${diffHtml}
+            <span class="font-mono font-bold text-[15px]">${e.weight.toFixed(1)} kg</span>
+          </div>
         </div>
       </div>`;
     }).join('');
