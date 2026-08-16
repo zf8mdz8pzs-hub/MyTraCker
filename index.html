@@ -100,6 +100,8 @@
   .modal-sheet { transition: transform .28s cubic-bezier(.32,.72,0,1); }
   .bg-panel { box-shadow: var(--shadow-card); }
   .hairline { border-color: rgb(var(--color-bone) / 0.08) !important; }
+  .weight-range-btn { background: rgb(var(--color-panelraised)); color: rgb(var(--color-steel)); transition: background .2s ease, color .2s ease; }
+  .weight-range-btn.active { background: rgb(var(--color-signal)); color: #FFFFFF; }
   .divide-hairline > :not([hidden]) ~ :not([hidden]) { border-color: rgb(var(--color-bone) / 0.08); }
   @keyframes viewFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .view-active { animation: viewFadeIn .28s cubic-bezier(.22,.61,.36,1); }
@@ -249,6 +251,11 @@
     </div>
 
     <div class="bg-panel border hairline rounded-2xl p-4 mb-6">
+      <div class="flex gap-2 mb-3">
+        <button onclick="setWeightRange('week')" data-range="week" class="weight-range-btn tap-scale flex-1 py-2 rounded-lg text-[12.5px] font-semibold">Semana</button>
+        <button onclick="setWeightRange('month')" data-range="month" class="weight-range-btn tap-scale flex-1 py-2 rounded-lg text-[12.5px] font-semibold">Mes</button>
+        <button onclick="setWeightRange('year')" data-range="year" class="weight-range-btn tap-scale flex-1 py-2 rounded-lg text-[12.5px] font-semibold">Año</button>
+      </div>
       <div id="chart-empty" class="hidden text-center py-12 text-steel text-sm px-4">Añade tu primer registro para ver tu progreso 📈</div>
       <canvas id="weight-chart" height="170"></canvas>
     </div>
@@ -617,7 +624,7 @@ function getDefaultSnack(){
 /* ============================================================
    ESTADO Y PERSISTENCIA
    ============================================================ */
-const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null, muscleTab: 'upper', currentExerciseId: null, lastStreak: null };
+const state = { activeTab: localStorage.getItem('activeTab') || 'dieta', calendarMonth: new Date(), financeMonth: new Date(), selectedExpenseCategoryId: null, editingCategories: null, muscleTab: 'upper', currentExerciseId: null, lastStreak: null, weightRange: 'month' };
 
 /* Lee un token de color activo (respeta claro/oscuro) y lo devuelve como rgb()/rgba() */
 function cssColor(name, alpha){
@@ -1307,19 +1314,36 @@ function buildExerciseChartSvg(points){
    PESO
    ============================================================ */
 let weightChart = null;
+function setWeightRange(range){
+  state.weightRange = range;
+  renderPeso();
+}
+function filterEntriesByRange(entries, range){
+  if(range==='all') return entries;
+  const days = range==='week' ? 7 : range==='month' ? 30 : 365;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = toISODate(cutoff);
+  return entries.filter(e=>e.date >= cutoffISO);
+}
 function renderPeso(){
   const entries = loadWeightEntries().slice().sort((a,b)=>a.date.localeCompare(b.date));
+  document.querySelectorAll('.weight-range-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.range===state.weightRange);
+  });
+  const chartEntries = filterEntriesByRange(entries, state.weightRange);
   const chartEmpty = document.getElementById('chart-empty');
   const canvas = document.getElementById('weight-chart');
 
-  if(entries.length===0){
+  if(chartEntries.length===0){
     chartEmpty.classList.remove('hidden');
     canvas.classList.add('hidden');
+    if(weightChart){ weightChart.destroy(); weightChart = null; }
   } else {
     chartEmpty.classList.add('hidden');
     canvas.classList.remove('hidden');
-    const labels = entries.map(e=>{ const d=new Date(e.date+'T00:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
-    const data = entries.map(e=>e.weight);
+    const labels = chartEntries.map(e=>{ const d=new Date(e.date+'T00:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
+    const data = chartEntries.map(e=>e.weight);
     if(weightChart) weightChart.destroy();
     weightChart = new Chart(canvas.getContext('2d'), {
       type:'line',
