@@ -56,6 +56,7 @@
     --color-steeldim: 199 199 204;   /* solo decorativo (bordes, casillas), nunca texto */
     --color-danger: 215 0 21;        /* systemRed accesible */
     --color-dangerfill: 215 0 21;
+    --color-danger-strong: 179 0 15;   /* rojo para texto sobre superficies elevadas */
     --color-positive: 30 123 52;     /* verde accesible */
     --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px -8px rgba(0,0,0,.10);
     --shadow-float: 0 12px 32px rgba(0,0,0,.14), 0 3px 10px rgba(0,0,0,.08);
@@ -72,6 +73,7 @@
       --color-steeldim: 99 99 102;
       --color-danger: 255 69 58;
       --color-dangerfill: 198 40 40;
+      --color-danger-strong: 255 107 97;
       --color-positive: 48 209 88;
       --shadow-card: 0 1px 2px rgba(0,0,0,.35), 0 8px 20px -6px rgba(0,0,0,.5);
       --shadow-float: 0 14px 36px rgba(0,0,0,.55), 0 4px 12px rgba(0,0,0,.4);
@@ -701,7 +703,7 @@ function showTab(tab){
   activeEl.classList.remove('view-active');
   void activeEl.offsetWidth;
   activeEl.classList.add('view-active');
-  if(tab==='entreno') renderEntreno();
+  if(tab==='entreno'){ supplementsEditing = false; renderEntreno(); }
   if(tab==='musculos' && window.MuscleLoad) window.MuscleLoad.render();
   if(tab==='peso') renderPeso();
 }
@@ -709,35 +711,120 @@ function showTab(tab){
 /* ============================================================
    ENTRENAMIENTO
    ============================================================ */
-/* Suplementación diaria — bajo el calendario. Los ids forman la clave `${fecha}_${id}` en mealCompletions */
-const SUPPLEMENTS = [
-  { id:'creatine',      name:'Creatina — 5 g', note:'A cualquier hora, disuelta en agua o con la comida.' },
-  { id:'omega3',        name:'Omega-3' },
-  { id:'magnesio',      name:'Magnesio' },
-  { id:'rosuvastatina', name:'Rosuvastatina' }
+/* Suplementación diaria — bajo el calendario.
+   La lista es editable y vive en localStorage ('supplements'). Los ids no cambian
+   al renombrar, así que la clave `${fecha}_${id}` de mealCompletions conserva el historial. */
+const SUPPLEMENTS_DEFAULT = [
+  { id:'creatine',      name:'Creatina', note:'5 g a cualquier hora, disuelta en agua o con la comida.' },
+  { id:'omega3',        name:'Omega-3',      note:'' },
+  { id:'magnesio',      name:'Magnesio',     note:'' },
+  { id:'rosuvastatina', name:'Rosuvastatina', note:'' }
 ];
+let supplementsEditing = false;
+
+function loadSupplements(){
+  try {
+    const raw = localStorage.getItem('supplements');
+    if(!raw) return SUPPLEMENTS_DEFAULT.slice();
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return SUPPLEMENTS_DEFAULT.slice();
+    return arr.filter(x => x && x.id && typeof x.name === 'string')
+              .map(x => ({ id: String(x.id), name: String(x.name), note: String(x.note || '') }));
+  } catch(e){ return SUPPLEMENTS_DEFAULT.slice(); }
+}
+function saveSupplements(list){ localStorage.setItem('supplements', JSON.stringify(list)); }
+
+function newSupplementId(list){
+  let n = 1;
+  while(list.some(x => x.id === 's' + n)) n++;
+  return 's' + n;
+}
+
 function renderSupplement(){
   const todayISO = toISODate(new Date());
   const completions = loadCompletions();
-  const doneCount = SUPPLEMENTS.filter(x=>completions[todayISO+'_'+x.id]).length;
-  const rows = SUPPLEMENTS.map(x=>{
-    const done = !!completions[todayISO+'_'+x.id];
-    return `<button onclick="toggleSupplement('${x.id}')" aria-pressed="${done}" class="tap-scale w-full flex items-center gap-3 bg-graphite/60 rounded-xl px-3 py-3 text-left min-h-[44px]">
-      <span class="w-5 h-5 rounded-md border-2 ${done?'bg-signal border-signal':'border-steeldim'} flex items-center justify-center flex-shrink-0">${done?'<span class="text-onsignal text-[0.7059rem] font-bold">✓</span>':''}</span>
-      <span class="flex-1 min-w-0">
-        <span class="block text-[0.8235rem] font-semibold ${done?'text-steel line-through':'text-bone'}">${x.name}</span>
-        ${x.note?`<span class="block text-[length:max(11px,0.6765rem)] text-steel mt-0.5 leading-snug">${x.note}</span>`:''}
-      </span>
-    </button>`;
-  }).join('');
+  const list = loadSupplements();
+  const doneCount = list.filter(x => completions[todayISO+'_'+x.id]).length;
+
+  const rows = supplementsEditing
+    ? list.map((x, i) => `
+      <div class="bg-graphite/60 rounded-xl px-3 py-2.5">
+        <div class="flex items-center gap-2">
+          <input class="flex-1 min-w-0 min-h-[44px] bg-panelraised rounded-lg px-3 py-2 text-[length:max(16px,0.8235rem)] text-bone outline-none"
+                 value="${escapeAttr(x.name)}" aria-label="Nombre del suplemento ${i+1}"
+                 onchange="editSupplement('${x.id}','name',this.value)" placeholder="Nombre">
+          <button onclick="moveSupplement('${x.id}',-1)" class="tap-scale w-11 h-11 rounded-lg bg-panelraised text-steel flex items-center justify-center" aria-label="Subir ${escapeAttr(x.name)}" ${i===0?'disabled style="opacity:.35"':''}>↑</button>
+          <button onclick="moveSupplement('${x.id}',1)" class="tap-scale w-11 h-11 rounded-lg bg-panelraised text-steel flex items-center justify-center" aria-label="Bajar ${escapeAttr(x.name)}" ${i===list.length-1?'disabled style="opacity:.35"':''}>↓</button>
+          <button onclick="deleteSupplement('${x.id}')" class="tap-scale w-11 h-11 rounded-lg bg-panelraised flex items-center justify-center text-[1.1rem] font-bold" style="color: rgb(var(--color-danger-strong));" aria-label="Eliminar ${escapeAttr(x.name)}">×</button>
+        </div>
+        <input class="w-full mt-2 min-h-[44px] bg-panelraised rounded-lg px-3 py-2 text-[length:max(16px,0.7059rem)] text-steel outline-none"
+               value="${escapeAttr(x.note)}" aria-label="Dosis o nota de ${escapeAttr(x.name)}"
+               onchange="editSupplement('${x.id}','note',this.value)" placeholder="Dosis o nota (opcional)">
+      </div>`).join('')
+    : list.map(x => {
+        const done = !!completions[todayISO+'_'+x.id];
+        return `<button onclick="toggleSupplement('${x.id}')" aria-pressed="${done}" class="tap-scale w-full flex items-center gap-3 bg-graphite/60 rounded-xl px-3 py-3 text-left min-h-[44px]">
+          <span class="w-5 h-5 rounded-md border-2 ${done?'bg-signal border-signal':'border-steeldim'} flex items-center justify-center flex-shrink-0">${done?'<span class="text-onsignal text-[0.7059rem] font-bold">✓</span>':''}</span>
+          <span class="flex-1 min-w-0">
+            <span class="block text-[0.8235rem] font-semibold ${done?'text-steel line-through':'text-bone'}">${escapeAttr(x.name)}</span>
+            ${x.note?`<span class="block text-[length:max(11px,0.6765rem)] text-steel mt-0.5 leading-snug">${escapeAttr(x.note)}</span>`:''}
+          </span>
+        </button>`;
+      }).join('');
+
+  const vacio = `<p class="text-[length:max(11px,0.7059rem)] text-steel text-center py-3 leading-relaxed">Sin suplementos en la lista. Toca “Añadir” para crear el primero.</p>`;
+
   document.getElementById('supplement-card').innerHTML = `
-    <div class="bg-panel border rounded-2xl p-4 ${doneCount===SUPPLEMENTS.length?'border-signal/40':'hairline'}">
+    <div class="bg-panel border rounded-2xl p-4 ${!supplementsEditing && list.length && doneCount===list.length?'border-signal/40':'hairline'}">
       <div class="flex flex-wrap items-center justify-between gap-x-3 mb-3">
         <p class="text-[length:max(11px,0.6471rem)] font-bold text-signal uppercase tracking-[0.12em]">Suplementación</p>
-        <span class="font-mono text-[0.7647rem] text-signal font-bold">${doneCount}/${SUPPLEMENTS.length}</span>
+        <span class="flex items-center gap-3">
+          ${supplementsEditing ? '' : `<span class="font-mono text-[0.7647rem] text-signal font-bold">${doneCount}/${list.length}</span>`}
+          <button onclick="toggleSupplementEdit()" class="tap-scale min-h-[44px] px-2 -mr-2 text-[length:max(11px,0.7059rem)] font-semibold text-signal">
+            ${supplementsEditing ? 'Hecho' : 'Editar'}
+          </button>
+        </span>
       </div>
-      <div class="space-y-2">${rows}</div>
+      <div class="space-y-2">${list.length ? rows : vacio}</div>
+      ${supplementsEditing ? `<button onclick="addSupplement()" class="tap-scale w-full mt-3 min-h-[44px] py-2.5 rounded-xl bg-panelraised text-bone font-semibold text-[0.7647rem]">+ Añadir suplemento</button>` : ''}
     </div>`;
+}
+
+function toggleSupplementEdit(){
+  supplementsEditing = !supplementsEditing;
+  renderSupplement();
+}
+function addSupplement(){
+  const list = loadSupplements();
+  list.push({ id: newSupplementId(list), name: 'Nuevo suplemento', note: '' });
+  saveSupplements(list);
+  renderSupplement();
+}
+function editSupplement(id, campo, valor){
+  const list = loadSupplements();
+  const item = list.find(x => x.id === id);
+  if(!item) return;
+  const limpio = String(valor).trim();
+  item[campo] = campo === 'name' ? (limpio || item.name) : limpio;
+  saveSupplements(list);
+  renderSupplement();
+}
+function moveSupplement(id, dir){
+  const list = loadSupplements();
+  const i = list.findIndex(x => x.id === id);
+  const j = i + dir;
+  if(i === -1 || j < 0 || j >= list.length) return;
+  const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+  saveSupplements(list);
+  renderSupplement();
+}
+function deleteSupplement(id){
+  const list = loadSupplements();
+  const item = list.find(x => x.id === id);
+  if(!item) return;
+  if(!confirm('¿Eliminar “' + item.name + '” de la lista? Los días que ya marcaste se conservan.')) return;
+  saveSupplements(list.filter(x => x.id !== id));
+  renderSupplement();
 }
 function toggleSupplement(id){
   const todayISO = toISODate(new Date());
@@ -746,6 +833,12 @@ function toggleSupplement(id){
   completions[key] = !completions[key];
   saveCompletions(completions);
   renderSupplement();
+}
+/* Escapa comillas y etiquetas para meter texto del usuario en el HTML */
+function escapeAttr(t){
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 var MASCOT_STATES = {
@@ -1004,7 +1097,7 @@ function deleteWeightEntry(date){
   renderPeso();
 }
 
-const BACKUP_KEYS = ['mealCompletions','workoutDays','weightEntries','liftoffData','muscleLoad:local'];
+const BACKUP_KEYS = ['mealCompletions','workoutDays','weightEntries','supplements','liftoffData','muscleLoad:local'];
 function exportData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -1045,7 +1138,7 @@ function getAllTrackedDates(){
   Object.keys(loadWorkoutDays()).forEach(d=>dates.add(d));
   const completions = loadCompletions();
   Object.keys(completions).forEach(k=>{
-    if(completions[k] && SUPPLEMENTS.some(x=>k.endsWith('_'+x.id))) dates.add(k.substring(0,10));
+    if(completions[k] && loadSupplements().some(x=>k.endsWith('_'+x.id))) dates.add(k.substring(0,10));
   });
   return Array.from(dates).sort();
 }
@@ -1055,12 +1148,13 @@ function exportExcel(){
   const weightEntries = loadWeightEntries();
   const workoutDays = loadWorkoutDays();
   const completions = loadCompletions();
-  const rows = [['Fecha','Peso (kg)','Entrenamiento', ...SUPPLEMENTS.map(x=>x.id==='creatine'?'Creatina':x.name)]];
+  const supplements = loadSupplements();
+  const rows = [['Fecha','Peso (kg)','Entrenamiento', ...supplements.map(x=>x.name)]];
   dates.forEach(date=>{
     const w = weightEntries.find(e=>e.date===date);
     const trainState = workoutDays[date];
     const trainLabel = trainState==='trained' ? 'Entrenado' : trainState==='active' ? 'Activo (10.000 pasos)' : trainState==='rest' ? 'Descanso' : '';
-    const suppCells = SUPPLEMENTS.map(x=>completions[date+'_'+x.id] ? 'Sí' : '');
+    const suppCells = supplements.map(x=>completions[date+'_'+x.id] ? 'Sí' : '');
     rows.push([date, w?w.weight:'', trainLabel, ...suppCells]);
   });
   const ws = XLSX.utils.aoa_to_sheet(rows);
