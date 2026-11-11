@@ -228,7 +228,8 @@ const REGLAS = {
   temporizadores: [0, 5, 10],
   semanasPorDefecto: 12,
   nombreMascota: 'Xiaolong',
-  calidadJPEG: 0.9
+  calidadJPEG: 0.9,
+  version: '1.4 (timelapse)'   // se muestra al final de Ajustes para comprobar que se ha cargado la versión nueva
 };
 
 const Logica = {
@@ -855,6 +856,8 @@ function vistaAjustes() {
       <button class="btn" data-a="exportar">${L('Exportar estadísticas (CSV)', 'Export statistics (CSV)')}</button></div>
     <div class="tarjeta"><h2>🔒 ${L('Fotos', 'Photos')}</h2>
       <p class="peq">${b.desbloqueado ? L('Tus fotos están desbloqueadas.', 'Your photos are unlocked.') : L(`${S.fotos.length} foto(s) bloqueadas hasta el ${fmt(o.finClave)}.`, `${S.fotos.length} photo(s) locked until ${fmt(o.finClave)}.`)}</p>
+      <p class="peq suave">🎬 ${b.desbloqueado ? L('Tu timelapse está en Galería → Vídeo.', 'Your timelapse is in Gallery → Video.')
+        : L('Cuando confirmes que has cumplido tu objetivo, se abrirá la Galería y se creará un timelapse con todas tus fotos (pestaña Vídeo).', 'When you confirm you reached your goal, the Gallery opens and a timelapse of all your photos is created (Video tab).')}</p>
       ${b.desbloqueado ? '' : `<button class="btn peligro" data-a="ir" data-v="emergencia">${L('Desbloqueo de emergencia', 'Emergency unlock')}</button>`}
       <details style="margin-top:.8rem"><summary class="peq">${L('Qué protege y qué no este bloqueo', 'What this lock does and does not protect')}</summary><div class="peq suave">
       <p>${L('Las fotos se guardan cifradas dentro del almacenamiento de este navegador en tu dispositivo. No se suben a GitHub ni a ningún servidor.', 'Photos are stored encrypted inside this browser’s storage on your device. They are never uploaded to GitHub or any server.')}</p>
@@ -862,6 +865,7 @@ function vistaAjustes() {
             'It is a commitment lock, not a security one: changing the device date skips the wait and the goal date; and with a computer and developer tools the photos can be extracted. Clearing Safari data or removing the Home Screen icon <b>deletes the photos forever</b>.')}</p></div></details></div>
     <div class="tarjeta"><h2>🧾 ${L('Registro', 'Log')}</h2>${registro ? `<table>${registro}</table>` : `<p class="peq suave">${L('Sin eventos todavía.', 'No events yet.')}</p>`}</div>
     <div class="tarjeta"><h2>${L('Zona peligrosa', 'Danger zone')}</h2><button class="btn peligro" data-a="reiniciar">${L('Reiniciar todo', 'Reset everything')}</button></div>
+    <p class="peq suave centro">Progreso v${REGLAS.version}</p>
     <p class="peq suave centro"><a href="#tests" data-a="verPruebas">${L('Ejecutar pruebas internas', 'Run internal tests')}</a></p>`;
 }
 
