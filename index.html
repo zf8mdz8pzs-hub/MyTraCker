@@ -116,6 +116,9 @@
   .rejilla .mascota { width: 100%; }
   .rejilla figcaption { font-size: .72rem; color: var(--suave); text-align: center; }
   .visor { position: relative; width: 100%; height: min(54vh, calc((100vw - 2rem) * 4 / 3)); margin: 0 auto; border-radius: 1rem; overflow: hidden; background: #000; }
+  .tl-marco { display: flex; justify-content: center; }
+  .tl-lienzo, .tl-video { display: block; max-width: 100%; max-height: 52vh; margin: 0 auto; border-radius: 1rem; background: #000; }
+  .tl-video { width: 100%; }
   /* Control segmentado al estilo iOS */
   .segmento { display: flex; background: var(--borde); border-radius: .65rem; padding: 2px; margin-bottom: .8rem; }
   .segmento button { flex: 1; border: 0; background: none; border-radius: .55rem; padding: .45rem .2rem; font-size: .85rem; font-weight: 600; color: var(--texto); cursor: pointer; min-height: 2.2rem; }
@@ -685,6 +688,7 @@ function pintar() {
   ponerCabecera(({ inicio: 'Progreso', calendario: L('Calendario', 'Calendar'), galeria: L('Galería', 'Gallery'), ajustes: L('Ajustes', 'Settings'),
                    emergencia: L('Emergencia', 'Emergency') })[S.vista], S.vista === 'emergencia' ? L('Ajustes', 'Settings') : '');
   app.innerHTML = ({ inicio: vistaInicio, calendario: vistaCalendario, galeria: vistaGaleria, ajustes: vistaAjustes, emergencia: vistaEmergencia })[S.vista]();
+  if (TL.lienzo && $('tl-vista')) $('tl-vista').appendChild(TL.lienzo);   // vista previa en directo mientras se graba
 }
 
 function vistaOnboarding() {
@@ -800,11 +804,13 @@ function vistaCalendario() {
 
 function vistaGaleria() {
   const g = S.gal, claves = [...S.fotos].sort((a, b) => a - b);
-  if (!g.urls) { cargarGaleria(); return `<p class="suave">${L('Descifrando tus fotos…', 'Decrypting your photos…')}</p>`; }
+  if (g.modo === 'timelapse' && (g.urls || TL.estado !== 'listo')) { /* el vídeo no necesita las miniaturas */ }
+  else if (!g.urls) { cargarGaleria(); return `<p class="suave">${L('Descifrando tus fotos…', 'Decrypting your photos…')}</p>`; }
   if (!claves.length) return `<p class="suave">${L('No hay fotos todavía.', 'No photos yet.')}</p>`;
-  const modos = [['rejilla', L('Todas', 'All')], ['linea', L('Línea de tiempo', 'Timeline')], ['comparar', L('Antes / después', 'Before / after')]];
+  const modos = [['rejilla', L('Todas', 'All')], ['linea', L('Línea', 'Timeline')], ['comparar', L('Comparar', 'Compare')], ['timelapse', L('Vídeo', 'Video')]];
   let cuerpo = '';
-  if (g.modo === 'rejilla') cuerpo = `<div class="rejilla">${claves.map((c, i) => `<figure data-a="galAbrir" data-i="${i}"><img src="${g.urls.get(c) || ''}" alt="${fmt(c)}" loading="lazy"><figcaption>${fmt(c, { day: 'numeric', month: 'short' })}</figcaption></figure>`).join('')}</div>`;
+  if (g.modo === 'timelapse') cuerpo = vistaTimelapse(claves.length);
+  else if (g.modo === 'rejilla') cuerpo = `<div class="rejilla">${claves.map((c, i) => `<figure data-a="galAbrir" data-i="${i}"><img src="${g.urls.get(c) || ''}" alt="${fmt(c)}" loading="lazy"><figcaption>${fmt(c, { day: 'numeric', month: 'short' })}</figcaption></figure>`).join('')}</div>`;
   else if (g.modo === 'linea') {
     g.i = Math.max(0, Math.min(claves.length - 1, g.i)); const c = claves[g.i];
     cuerpo = `<div class="visor"><img id="gal-img" src="${g.urls.get(c) || ''}" alt="${fmt(c)}"></div>
@@ -833,7 +839,7 @@ function soltarGaleria() { if (S.gal.urls) { S.gal.urls.forEach(u => URL.revokeO
 function vistaAjustes() {
   const o = S.objetivo, b = bloqueo();
   const nombresEv = { foto: L('Foto', 'Photo'), objetivo: L('Objetivo', 'Goal'), plazo: L('Plazo', 'Deadline'), gracia: L('Día de gracia', 'Grace day'),
-    emergencia: L('Emergencia', 'Emergency'), desbloqueo: L('Desbloqueo', 'Unlock') };
+    emergencia: L('Emergencia', 'Emergency'), desbloqueo: L('Desbloqueo', 'Unlock'), timelapse: L('Timelapse', 'Timelapse') };
   const registro = [...S.auditoria].reverse().filter(x => x.tipo !== 'foto').slice(0, 40)
     .map(x => `<tr><td>${new Date(x.t).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' })}</td><td><b>${nombresEv[x.tipo] || esc(x.tipo)}</b> ${esc(x.detalle)}</td></tr>`).join('');
   return `
@@ -965,6 +971,131 @@ async function registrarFoto(blob) {
 }
 
 // ---------------------------------------------------------------------
+//  Timelapse: se genera en el propio iPhone con un lienzo + MediaRecorder.
+//  Las fotos se descifran una a una, se dibujan en orden y se graban en vídeo.
+//  Nada sale del dispositivo hasta que tú decides guardarlo o compartirlo.
+// ---------------------------------------------------------------------
+const TL = { estado: 'listo', fps: 8, fecha: false, suave: true, progreso: 0, url: null, blob: null, ext: 'mp4', error: '', lienzo: null, cancelar: false };
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const tlDuracion = n => n / TL.fps;
+function tlFormato() {
+  if (!window.MediaRecorder) return null;
+  return ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+    .find(t => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } }) || null;
+}
+async function tlImagen(blob) {
+  if (window.createImageBitmap) { try { return await createImageBitmap(blob); } catch (e) { /* se intenta con <img> */ } }
+  const url = URL.createObjectURL(blob);
+  try { const im = new Image(); im.src = url; await im.decode(); return im; } finally { URL.revokeObjectURL(url); }
+}
+async function crearTimelapse() {
+  if (TL.estado === 'generando') return;
+  const claves = [...S.fotos].sort((a, b) => a - b), mime = tlFormato();
+  const lienzo = document.createElement('canvas');
+  if (claves.length < 2) return tlFallo(L('Hacen falta al menos 2 fotos.', 'At least 2 photos are needed.'));
+  if (!mime || !lienzo.captureStream) return tlFallo(L('Este navegador no puede grabar vídeo. Actualiza iOS (hace falta iOS 14.5 o posterior).', 'This browser cannot record video. Update iOS (14.5 or later is needed).'));
+  if (TL.url) URL.revokeObjectURL(TL.url);
+  Object.assign(TL, { estado: 'generando', progreso: 0, url: null, blob: null, error: '', cancelar: false, lienzo, ext: mime.includes('mp4') ? 'mp4' : 'webm' });
+  if (S.vista === 'galeria') pintar();
+  let vivo = true, rec = null;
+  try {
+    // Orientación del vídeo según la primera foto (vertical u horizontal)
+    let actual = await tlImagen(await BD.leerFoto(claves[0]));
+    const vertical = (actual.height || 1) >= (actual.width || 1);
+    const W = vertical ? 720 : 1280, H = vertical ? 1280 : 720;
+    lienzo.width = W; lienzo.height = H; lienzo.className = 'tl-lienzo';
+    const x = lienzo.getContext('2d'), u = Math.min(W, H) / 720, fuente = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const texto = (t, px, y, color, peso = 700, alin = 'center', xx = W / 2) => { x.font = `${peso} ${px * u}px ${fuente}`; x.fillStyle = color; x.textAlign = alin; x.fillText(t, xx, y); };
+    const foto = (im, alfa = 1) => {
+      const w = im.width, h = im.height, k = Math.min(W / w, H / h);
+      x.globalAlpha = alfa; x.drawImage(im, (W - w * k) / 2, (H - h * k) / 2, w * k, h * k); x.globalAlpha = 1;
+    };
+    const rotulo = (c, i) => {
+      if (!TL.fecha) return;
+      const g = x.createLinearGradient(0, H - 230 * u, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.65)');
+      x.fillStyle = g; x.fillRect(0, H - 230 * u, W, 230 * u);
+      texto(`${L('Día', 'Day')} ${Logica.diasEntre(inicio, c) + 1}`, 60, H - 92 * u, '#fff', 800, 'left', 40 * u);
+      texto(fmt(c), 28, H - 48 * u, 'rgba(255,255,255,.85)', 500, 'left', 40 * u);
+      x.fillStyle = 'rgba(255,255,255,.25)'; x.fillRect(0, H - 8 * u, W, 8 * u);
+      x.fillStyle = '#f7c93b'; x.fillRect(0, H - 8 * u, W * (i + 1) / claves.length, 8 * u);
+    };
+    const inicio = claves[0];
+    // Bucle de dibujo: repinta cada fotograma para que el grabador siempre reciba imagen.
+    // El vídeo empieza directamente en la primera foto: sin portada ni cierre.
+    let escena = () => { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); foto(actual); rotulo(inicio, 0); };
+    const bucle = t => { if (!vivo) return; escena(t); requestAnimationFrame(bucle); };
+    escena(); requestAnimationFrame(bucle);
+
+    const trozos = [];
+    rec = new MediaRecorder(lienzo.captureStream(30), { mimeType: mime, videoBitsPerSecond: 8000000 });
+    rec.ondataavailable = ev => { if (ev.data && ev.data.size) trozos.push(ev.data); };
+    const parado = new Promise(r => { rec.onstop = r; });
+    rec.start(500);
+
+    // Fotos: cada una dura 1/fps segundos, con fundido opcional desde la anterior
+    const d = 1000 / TL.fps;
+    let anterior = null, siguiente = claves.length > 1 ? tlImagen(await BD.leerFoto(claves[1])) : null;
+    for (let i = 0; i < claves.length; i++) {
+      if (TL.cancelar) throw new Error('cancelado');
+      const t0 = performance.now(), im = actual, prev = anterior, c = claves[i];
+      escena = t => {
+        x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+        const a = prev && TL.suave ? Math.min(1, (t - t0) / (d * .45)) : 1;
+        if (prev && a < 1) foto(prev);
+        foto(im, a); rotulo(c, i);
+      };
+      TL.progreso = (i + 1) / claves.length; tlActualizar();
+      const pausa = esperar(d);
+      if (i + 1 < claves.length) {
+        const sig = await siguiente;                               // ya se estaba descifrando
+        siguiente = i + 2 < claves.length ? BD.leerFoto(claves[i + 2]).then(tlImagen) : null;
+        await pausa;
+        if (anterior && anterior.close) anterior.close();
+        anterior = im; actual = sig;
+      } else await pausa;
+    }
+    await esperar(120);   // margen para que el último fotograma quede grabado entero
+    if (actual && actual.close) actual.close();
+    rec.stop(); await parado; vivo = false;
+    const blob = new Blob(trozos, { type: mime.split(';')[0] });
+    if (!blob.size) throw new Error(L('el vídeo ha salido vacío', 'the video came out empty'));
+    Object.assign(TL, { estado: 'hecho', blob, url: URL.createObjectURL(blob), lienzo: null });
+    auditar('timelapse', `${claves.length} ${L('fotos', 'photos')}`); guardar();
+  } catch (err) {
+    vivo = false; try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) { /* nada */ }
+    tlFallo(TL.cancelar ? L('Se ha interrumpido porque saliste de la app. Vuelve a intentarlo con la app abierta.', 'It was interrupted because you left the app. Try again keeping the app open.')
+                        : L('No se ha podido crear el vídeo: ', 'The video could not be created: ') + (err.message || err));
+    return;
+  }
+  if (S.vista === 'galeria') pintar();
+}
+function tlFallo(msg) { Object.assign(TL, { estado: 'error', error: msg, lienzo: null }); if (S.vista === 'galeria') pintar(); }
+function tlActualizar() {
+  const p = $('tl-barra'); if (p) p.style.width = Math.round(TL.progreso * 100) + '%';
+  const t = $('tl-texto'); if (t) t.textContent = Math.round(TL.progreso * 100) + '%';
+}
+function vistaTimelapse(n) {
+  if (TL.estado === 'generando') return `<div id="tl-vista" class="tl-marco"></div>
+    <div class="barra" style="margin-top:.8rem"><i id="tl-barra" style="width:${Math.round(TL.progreso * 100)}%"></i></div>
+    <p class="centro"><b>${L('Creando tu timelapse…', 'Creating your timelapse…')}</b> <span id="tl-texto" class="suave">${Math.round(TL.progreso * 100)}%</span></p>
+    <p class="peq suave centro">${L('Mantén la app abierta y la pantalla encendida hasta que termine.', 'Keep the app open and the screen on until it finishes.')}</p>`;
+  if (TL.estado === 'hecho') return `<video class="tl-video" src="${TL.url}" controls playsinline autoplay muted loop></video>
+    <p class="fila" style="margin-top:.8rem"><button class="btn principal crece" data-a="tlCompartir">⤴ ${L('Guardar o compartir', 'Save or share')}</button>
+    <button class="btn" data-a="tlNuevo">${L('Crear otro', 'Make another')}</button></p>
+    <p class="peq suave">${L('En el iPhone, elige “Guardar vídeo” para que vaya a Fotos. Desde ese momento ya no está protegido por la app.', 'On iPhone, choose “Save Video” to put it in Photos. From then on it is no longer protected by the app.')}</p>`;
+  const opciones = [4, 8, 12, 20];
+  return `<div class="tarjeta"><h2>🎬 ${L('Timelapse', 'Timelapse')}</h2>
+    <p class="peq suave">${L(`Un vídeo solo con tus ${n} fotos, en orden, de la primera a la última.`, `A video of just your ${n} photos, in order, from first to last.`)}</p>
+    <label for="tl-fps">${L('Velocidad', 'Speed')}</label>
+    <select id="tl-fps" data-c="tlFps">${opciones.map(f => `<option value="${f}" ${TL.fps === f ? 'selected' : ''}>${f} ${L('fotos por segundo', 'photos per second')}</option>`).join('')}</select>
+    <p class="peq suave">${L('Duración aproximada', 'Approximate length')}: <b>${Math.round(tlDuracion(n))} s</b></p>
+    <label style="font-weight:400"><input type="checkbox" data-c="tlFecha" ${TL.fecha ? 'checked' : ''}> ${L('Mostrar día y fecha', 'Show day and date')}</label>
+    <label style="font-weight:400"><input type="checkbox" data-c="tlSuave" ${TL.suave ? 'checked' : ''}> ${L('Fundido entre fotos', 'Crossfade between photos')}</label>
+    ${TL.estado === 'error' ? `<p class="mal peq">${esc(TL.error)}</p>` : ''}
+    <p><button class="btn principal grande" data-a="tlCrear" ${n < 2 ? 'disabled' : ''}>${L('Crear timelapse', 'Create timelapse')}</button></p></div>`;
+}
+
+// ---------------------------------------------------------------------
 //  Exportaciones: calendario (.ics) y estadísticas (.csv)
 // ---------------------------------------------------------------------
 async function compartirArchivo(nombre, tipo, texto) {
@@ -1027,7 +1158,8 @@ const A = {
   },
   async objetivoSi() {
     if (!confirm(L('¿Confirmas que has cumplido tu objetivo? Se desbloquearán todas las fotos.', 'Do you confirm you reached your goal? All photos will unlock.'))) return;
-    S.objetivo.cumplido = true; auditar('desbloqueo', L('objetivo cumplido', 'goal reached')); await guardar(); S.vista = 'galeria'; pintar();
+    S.objetivo.cumplido = true; auditar('desbloqueo', L('objetivo cumplido', 'goal reached')); await guardar();
+    S.vista = 'galeria'; S.gal.modo = 'timelapse'; pintar(); crearTimelapse();
   },
   objetivoNo() { S.ampliar = true; pintar(); },
   ampliarCancelar() { S.ampliar = false; pintar(); },
@@ -1044,6 +1176,9 @@ const A = {
   },
   calMes(el) { let { y, m } = S.cal; m += Number(el.dataset.n); if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } S.cal = { y, m }; pintar(); },
   galModo(el) { S.gal.modo = el.dataset.m; pintar(); },
+  tlCrear() { crearTimelapse(); },
+  tlNuevo() { if (TL.url) URL.revokeObjectURL(TL.url); Object.assign(TL, { estado: 'listo', url: null, blob: null }); pintar(); },
+  tlCompartir() { compartirArchivo(`timelapse-${REGLAS.nombreMascota.toLowerCase()}.${TL.ext}`, TL.blob.type || 'video/mp4', TL.blob); },
   galAbrir(el) { S.gal.i = Number(el.dataset.i); S.gal.modo = 'linea'; pintar(); window.scrollTo(0, 0); },
   galPaso(el) { S.gal.i += Number(el.dataset.n); pintar(); },
   descargarICS() { compartirArchivo('progreso-recordatorios.ics', 'text/calendar', generarICS()); },
@@ -1079,12 +1214,15 @@ const C = {
     $('gal-img').src = S.gal.urls.get(c) || ''; $('gal-fecha').textContent = fmt(c);
     $('gal-n').textContent = `· ${L('día', 'day')} ${Logica.diasEntre(claves[0], c) + 1} · ${i + 1}/${claves.length}`;
   },
+  tlFps(el) { TL.fps = Number(el.value); pintar(); },
+  tlFecha(el) { TL.fecha = el.checked; },
+  tlSuave(el) { TL.suave = el.checked; },
   galCorte(el) { S.gal.corte = Number(el.value); $('gal-antes').style.clipPath = `inset(0 ${100 - S.gal.corte}% 0 0)`; $('gal-linea').style.left = S.gal.corte + '%'; }
 };
 document.addEventListener('click', ev => { const el = ev.target.closest('[data-a]'); if (el && A[el.dataset.a]) A[el.dataset.a](el, ev); });
 ['input', 'change'].forEach(t => document.addEventListener(t, ev => {
   const el = ev.target.closest('[data-c]'); if (!el) return;
-  const soloChange = ['onbSemanas', 'nocheActiva', 'idioma', 'horaPrincipal', 'horaNoche', 'onbFin'].includes(el.dataset.c);
+  const soloChange = ['tlFps', 'tlFecha', 'tlSuave', 'onbSemanas', 'nocheActiva', 'idioma', 'horaPrincipal', 'horaNoche', 'onbFin'].includes(el.dataset.c);
   if ((t === 'change') === soloChange && C[el.dataset.c]) C[el.dataset.c](el);
 }));
 // Foto desde la cámara del sistema (alternativa si no hay acceso directo)
@@ -1109,7 +1247,7 @@ document.addEventListener('pointerdown', ev => {
 document.addEventListener('contextmenu', ev => { if (ev.target.closest('#pulsar')) ev.preventDefault(); });
 // Al volver a la app (o cambiar de día) se recalcula todo
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if ($('camara').classList.contains('visible')) Cam.cerrar(); }
+  if (document.hidden) { if ($('camara').classList.contains('visible')) Cam.cerrar(); if (TL.estado === 'generando') TL.cancelar = true; }
   else if (S.objetivo && !$('fiesta').classList.contains('visible') && !['INPUT', 'SELECT', 'TEXTAREA'].includes((document.activeElement || {}).tagName)) pintar();
 });
 
