@@ -1127,13 +1127,14 @@ function mostrarPruebas() {
 function ponerIcono() { // icono de pantalla de inicio dibujado por código (sin imágenes externas)
   try {
     const c = document.createElement('canvas'); c.width = c.height = 180; const x = c.getContext('2d');
-    x.fillStyle = '#101418'; x.fillRect(0, 0, 180, 180);
-    x.fillStyle = '#e5383b'; x.beginPath(); x.ellipse(90, 104, 50, 54, 0, 0, 7); x.fill();
-    x.fillStyle = '#ffd54a'; x.beginPath(); x.ellipse(70, 40, 7, 14, -.4, 0, 7); x.fill(); x.beginPath(); x.ellipse(110, 40, 7, 14, .4, 0, 7); x.fill();
-    x.fillStyle = '#fff'; x.beginPath(); x.ellipse(72, 92, 10, 12, 0, 0, 7); x.ellipse(108, 92, 10, 12, 0, 0, 7); x.fill();
-    x.fillStyle = '#1d2329'; x.beginPath(); x.arc(73, 93, 5, 0, 7); x.arc(107, 93, 5, 0, 7); x.fill();
-    x.strokeStyle = '#1d2329'; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(76, 116); x.quadraticCurveTo(90, 130, 104, 116); x.stroke();
-    const l = document.createElement('link'); l.rel = 'apple-touch-icon'; l.href = c.toDataURL('image/png'); document.head.appendChild(l);
+    // Logo: carpa dorada sencilla sobre rojo chino (silueta + un ojo, sin más detalles)
+    x.fillStyle = '#b3261e'; x.fillRect(0, 0, 180, 180);
+    x.fillStyle = '#f7c93b';
+    x.beginPath(); x.ellipse(78, 90, 46, 32, 0, 0, Math.PI * 2); x.fill();                     // cuerpo
+    x.beginPath(); x.moveTo(112, 90); x.lineTo(152, 58); x.quadraticCurveTo(140, 90, 152, 122); x.closePath(); x.fill(); // cola
+    x.fillStyle = '#b3261e'; x.beginPath(); x.arc(56, 82, 6.5, 0, Math.PI * 2); x.fill();     // ojo
+    const png = c.toDataURL('image/png');
+    ['apple-touch-icon', 'icon'].forEach(rel => { const l = document.createElement('link'); l.rel = rel; l.href = png; document.head.appendChild(l); });
   } catch (e) { /* sin icono no pasa nada */ }
 }
 
